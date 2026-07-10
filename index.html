@@ -37,8 +37,9 @@
 
   /* ---------- Login ---------- */
   #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;padding:24px;text-align:center;}
-  .brandmark{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--navy));
-    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:22px;letter-spacing:-1px;}
+  .brandmark{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--navy));
+    display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px -6px rgba(47,58,92,.45);}
+  .brandmark svg{width:30px;height:30px;}
   #loginScreen h1{font-size:22px;margin:0;letter-spacing:-.02em;}
   #loginScreen p{color:var(--sub);margin:0;font-size:14px;line-height:1.6;}
   .naverBtn{display:flex;align-items:center;gap:10px;background:#03C75A;color:#fff;border:none;
@@ -167,7 +168,14 @@
 
 <!-- ================= LOGIN ================= -->
 <div id="loginScreen">
-  <div class="brandmark">체</div>
+  <div class="brandmark">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 13.5 L4.5 20.5 L8.5 19.5 L10 22.5 L13 15.5" />
+      <path d="M16 13.5 L19.5 20.5 L15.5 19.5 L14 22.5 L11 15.5" />
+      <circle cx="12" cy="8.5" r="6.2" />
+      <path d="M9.3 8.6 L11.1 10.4 L15 6.3" />
+    </svg>
+  </div>
   <h1>체험단 대시보드</h1>
   <p>진행 중인 체험단 캠페인, 리뷰 마감일, 정산 상태를<br>한눈에 관리하세요.</p>
   <button class="naverBtn" onclick="loginWithNaver()">
