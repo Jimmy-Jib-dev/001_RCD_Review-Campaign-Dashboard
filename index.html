@@ -106,6 +106,22 @@
   .calCell .num{font-weight:600;}
   .calCell .tag{font-size:8.5px;background:var(--accent-soft);color:var(--accent);border-radius:5px;
     padding:1px 3px;margin-top:2px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .calCell{cursor:pointer;transition:background .12s;}
+  .calCell.pad{cursor:default;}
+  .calCell:not(.pad):hover{background:#f4f2ed;}
+  .calCell.hasItems{background:#fbf5f1;}
+
+  /* ---------- Day summary modal ---------- */
+  .dayModal{max-width:420px;}
+  .dayModal h2{display:flex;align-items:center;justify-content:space-between;}
+  .dayModal .closeX{background:none;border:none;color:var(--sub);font-size:20px;line-height:1;padding:2px 6px;cursor:pointer;}
+  .dayItem{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;}
+  .dayItem:hover{background:#fbfaf8;}
+  .dayItem .dRow1{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .dayItem .dName{font-weight:700;font-size:14px;}
+  .dayItem .dReward{font-weight:700;font-size:13.5px;color:var(--accent);}
+  .dayItem .dMeta{display:flex;gap:6px;flex-wrap:wrap;}
+  .dayEmpty{text-align:center;color:var(--sub);padding:30px 10px;font-size:13.5px;}
 
   /* ---------- Site performance ---------- */
   .siteRow{display:flex;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid #f2f0ec;}
@@ -255,7 +271,7 @@
     <select id="fCategory" onchange="renderList()">
       <option value="">전체 카테고리</option>
       <option value="식당">식당</option><option value="카페">카페</option>
-      <option value="뷰티">뷰티</option><option value="생활">생활</option><option value="기타">기타</option>
+      <option value="뷰티">뷰티</option><option value="리뷰">리뷰</option><option value="기타">기타</option>
     </select>
     <select id="fStatus" onchange="renderList()">
       <option value="">전체 상태</option><option value="진행중">진행중</option>
@@ -274,14 +290,18 @@
     <input type="hidden" id="fId">
     <div class="field"><label>업체명</label><input id="fName" placeholder="예: OO카페"></div>
     <div class="fieldRow">
-      <div class="field"><label>캠페인 사이트</label><input id="fSiteInput" list="siteList" placeholder="예: 리뷰플레이스"></div>
+      <div class="field">
+        <label>캠페인 사이트</label>
+        <select id="fSiteSelect" onchange="handleSiteSelectChange()"></select>
+        <input id="fSiteCustom" placeholder="사이트명 입력" style="display:none;margin-top:8px">
+      </div>
       <div class="field"><label>유형</label>
-        <select id="fType"><option value="방문형">방문형</option><option value="배송형">배송형</option></select>
+        <select id="fType"><option value="방문형">방문형</option><option value="배송형">배송형</option><option value="기자단">기자단</option><option value="원고형">원고형</option></select>
       </div>
     </div>
     <div class="fieldRow">
       <div class="field"><label>카테고리</label>
-        <select id="fCategoryInput"><option>식당</option><option>카페</option><option>뷰티</option><option>생활</option><option>기타</option></select>
+        <select id="fCategoryInput"><option>식당</option><option>카페</option><option>뷰티</option><option>리뷰</option><option>기타</option></select>
       </div>
       <div class="field"><label>예약방법</label>
         <select id="fReserve"><option value="네이버예약">네이버예약</option><option value="전화예약">전화예약</option>
@@ -318,7 +338,13 @@
     </div>
   </div>
 </div>
-<datalist id="siteList"></datalist>
+
+<div class="modalBg" id="dayModalBg" onclick="if(event.target===this) closeDayModal()">
+  <div class="modal dayModal">
+    <h2><span id="dayModalTitle">7/10(금)</span><button class="closeX" onclick="closeDayModal()">✕</button></h2>
+    <div id="dayModalList"></div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -333,6 +359,34 @@ let campaigns = [];
 let authToken = null;
 let userInfo = null;
 let calCursor = new Date();
+
+const SITE_PRESETS = [
+  "강남맛집","디너의여왕","리뷰노트","리뷰진","서울오빠","리뷰플레이스",
+  "리얼리뷰","데일리뷰","위유","가보자체험단","놀러와체험단","클라우드체험단",
+  "포포몬","포블로그","레뷰","스토리앤미디어","미블","체험뷰"
+];
+
+function populateSiteSelect(){
+  const sel = document.getElementById('fSiteSelect');
+  const known = new Set(SITE_PRESETS);
+  campaigns.forEach(c=>{ if(c.site) known.add(c.site); });
+  const extra = [...known].filter(s=>!SITE_PRESETS.includes(s)).sort();
+  sel.innerHTML = '<option value="">사이트 선택</option>'
+    + SITE_PRESETS.map(s=>`<option value="${s}">${s}</option>`).join('')
+    + (extra.length ? `<optgroup label="이전에 등록한 사이트">${extra.map(s=>`<option value="${s}">${s}</option>`).join('')}</optgroup>` : '')
+    + '<option value="__custom__">+ 직접 입력</option>';
+}
+function handleSiteSelectChange(){
+  const sel = document.getElementById('fSiteSelect');
+  const custom = document.getElementById('fSiteCustom');
+  if(sel.value === '__custom__'){
+    custom.style.display = 'block';
+    custom.value = '';
+    custom.focus();
+  } else {
+    custom.style.display = 'none';
+  }
+}
 
 /* ---------------- Utils ---------------- */
 function uid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(); }
@@ -530,12 +584,39 @@ function renderCalendar(){
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const items = campaigns.filter(c=>c.deadline===ds);
     const cell = document.createElement('div');
-    cell.className = 'calCell' + (ds===todayStr()?' today':'');
+    cell.className = 'calCell' + (ds===todayStr()?' today':'') + (items.length ? ' hasItems' : '');
     cell.innerHTML = `<div class="num">${d}</div>` + items.slice(0,2).map(it=>`<span class="tag" title="${it.name}">${it.name}</span>`).join('');
+    cell.onclick = () => openDayModal(ds);
     grid.appendChild(cell);
   }
 }
 function calShift(dir){ calCursor.setMonth(calCursor.getMonth()+dir); renderCalendar(); }
+
+function openDayModal(ds){
+  const items = campaigns.filter(c=>c.deadline===ds).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  document.getElementById('dayModalTitle').textContent = fmtDateKR(ds) + ' 리뷰 마감';
+  const list = document.getElementById('dayModalList');
+  if(items.length===0){
+    list.innerHTML = '<div class="dayEmpty">이 날짜에 마감 예정인 캠페인이 없어요.</div>';
+  } else {
+    list.innerHTML = items.map(it=>{
+      const days = diffDays(it.deadline);
+      const cls = ddayClass(days, it.reviewStatus);
+      const ddayLabel = days>=0 ? `D-${days}` : `D+${-days}`;
+      return `<div class="dayItem" onclick="closeDayModal(); openModal('${it.id}')">
+        <div class="dRow1"><span class="dName">${escapeHtml(it.name||'(이름 없음)')}</span><span class="dReward">${fmtWon(it.reward)}</span></div>
+        <div class="dMeta">
+          <span class="tag">${escapeHtml(it.site||'-')}</span>
+          <span class="tag alt">${escapeHtml(it.category||'-')}</span>
+          <span class="tag alt">${it.reviewStatus||'-'}</span>
+          <span class="tag alt">${ddayLabel}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('dayModalBg').classList.add('show');
+}
+function closeDayModal(){ document.getElementById('dayModalBg').classList.remove('show'); }
 
 function renderSitePerformance(){
   const el = document.getElementById('sitePerfList');
@@ -570,8 +651,6 @@ function renderSiteFilter(){
   const sites = [...new Set(campaigns.map(c=>c.site).filter(Boolean))].sort();
   sel.innerHTML = '<option value="">전체 사이트</option>' + sites.map(s=>`<option value="${s}">${s}</option>`).join('');
   sel.value = cur;
-  const dl = document.getElementById('siteList');
-  dl.innerHTML = sites.map(s=>`<option value="${s}">`).join('');
 }
 
 function ddayClass(days, reviewStatus){
@@ -632,7 +711,16 @@ function openModal(id){
   const c = isEdit ? campaigns.find(x=>x.id===id) : {};
   document.getElementById('fId').value = c.id || '';
   document.getElementById('fName').value = c.name || '';
-  document.getElementById('fSiteInput').value = c.site || '';
+  populateSiteSelect();
+  const siteSel = document.getElementById('fSiteSelect');
+  const siteCustom = document.getElementById('fSiteCustom');
+  if(c.site && SITE_PRESETS.includes(c.site)){
+    siteSel.value = c.site; siteCustom.style.display = 'none';
+  } else if(c.site){
+    siteSel.value = '__custom__'; siteCustom.style.display = 'block'; siteCustom.value = c.site;
+  } else {
+    siteSel.value = ''; siteCustom.style.display = 'none'; siteCustom.value = '';
+  }
   document.getElementById('fType').value = c.type || '방문형';
   document.getElementById('fCategoryInput').value = c.category || '식당';
   document.getElementById('fReserve').value = c.reserveMethod || '네이버예약';
@@ -656,7 +744,10 @@ function saveCampaignFromForm(){
   const obj = {
     id,
     name,
-    site: document.getElementById('fSiteInput').value.trim(),
+    site: (function(){
+      const sel = document.getElementById('fSiteSelect').value;
+      return sel === '__custom__' ? document.getElementById('fSiteCustom').value.trim() : sel;
+    })(),
     type: document.getElementById('fType').value,
     category: document.getElementById('fCategoryInput').value,
     reserveMethod: document.getElementById('fReserve').value,
