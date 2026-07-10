@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>체험단 대시보드</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --bg:#f5f4f0;
+    --card:#ffffff;
+    --ink:#20232b;
+    --sub:#767b87;
+    --line:#e7e4dd;
+    --accent:#c96a42;       /* terracotta — 리뷰/기한 */
+    --accent-soft:#f4e1d5;
+    --navy:#2f3a5c;         /* 정산/데이터 */
+    --navy-soft:#e2e5ee;
+    --good:#3f8f5f;
+    --good-soft:#dcefe2;
+    --warn:#c98a2e;
+    --warn-soft:#f6e8d1;
+    --danger:#c94b3f;
+    --danger-soft:#f6dcd8;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 24px -12px rgba(20,20,20,.10);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  ::selection{background:var(--accent-soft);}
+
+  /* ---------- Login ---------- */
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;padding:24px;text-align:center;}
+  .brandmark{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--navy));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:22px;letter-spacing:-1px;}
+  #loginScreen h1{font-size:22px;margin:0;letter-spacing:-.02em;}
+  #loginScreen p{color:var(--sub);margin:0;font-size:14px;line-height:1.6;}
+  .naverBtn{display:flex;align-items:center;gap:10px;background:#03C75A;color:#fff;border:none;
+    padding:13px 26px;border-radius:10px;font-size:15px;font-weight:600;box-shadow:var(--shadow);}
+  .naverBtn:hover{filter:brightness(1.04);}
+  .naverBtn svg{width:16px;height:16px;}
+  #loginError{color:var(--danger);font-size:13px;display:none;}
+
+  /* ---------- Layout ---------- */
+  #app{display:none;max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
+  .topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap;}
+  .topbar h1{font-size:24px;margin:0 0 4px;letter-spacing:-.02em;}
+  .topbar .meta{color:var(--sub);font-size:13.5px;}
+  .topbarRight{display:flex;align-items:center;gap:10px;}
+  .userChip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+    padding:7px 12px 7px 8px;border-radius:999px;font-size:13px;color:var(--sub);box-shadow:var(--shadow);}
+  .userChip .dot{width:24px;height:24px;border-radius:50%;background:var(--navy-soft);color:var(--navy);
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+  .logoutBtn{background:none;border:none;color:var(--sub);font-size:12px;text-decoration:underline;padding:0;}
+  .primaryBtn{background:var(--ink);color:#fff;border:none;border-radius:10px;padding:11px 18px;
+    font-size:14px;font-weight:600;box-shadow:var(--shadow);white-space:nowrap;}
+  .primaryBtn:hover{background:#000;}
+  .ghostBtn{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+    font-size:13px;color:var(--ink);}
+
+  /* ---------- Stat cards ---------- */
+  .statGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+  .statCard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;}
+  .statCard .num{font-size:26px;font-weight:700;letter-spacing:-.02em;}
+  .statCard .num.accent{color:var(--accent);}
+  .statCard .label{color:var(--sub);font-size:13px;margin-top:2px;}
+
+  /* ---------- Timeline ---------- */
+  .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;margin-bottom:16px;}
+  .panel h3{margin:0 0 14px;font-size:14.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;}
+  .panel h3 .legend{font-size:12px;color:var(--sub);font-weight:500;display:flex;align-items:center;gap:5px;}
+  .legend .sw{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;}
+  .timelineTrack{display:flex;overflow-x:auto;gap:0;padding-bottom:4px;}
+  .tDay{flex:0 0 78px;text-align:center;position:relative;padding:10px 4px 4px;border-right:1px solid var(--line);}
+  .tDay:last-child{border-right:none;}
+  .tDay .dow{font-size:11px;color:var(--sub);}
+  .tDay .dnum{font-size:13px;margin-top:2px;}
+  .tDay.today .dnum{font-weight:800;color:var(--accent);}
+  .tDay .marker{margin-top:8px;display:flex;flex-direction:column;gap:3px;align-items:center;}
+  .tDay .pill{font-size:9.5px;background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:2px 5px;
+    max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* ---------- Split: donut + calendar ---------- */
+  .splitGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .donutWrap{display:flex;align-items:center;gap:24px;}
+  .donutTotal{font-size:28px;font-weight:800;letter-spacing:-.02em;}
+  .donutList{display:flex;flex-direction:column;gap:8px;font-size:13px;margin-top:14px;}
+  .donutList .row{display:flex;align-items:center;gap:8px;color:var(--sub);}
+  .donutList .sw{width:9px;height:9px;border-radius:3px;}
+  .donutList b{color:var(--ink);margin-left:auto;font-weight:600;}
+  .calHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .calNav{display:flex;gap:6px;}
+  .calNav button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--sub);}
+  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .calGrid .dow{font-size:11px;color:var(--sub);text-align:center;padding-bottom:4px;}
+  .calCell{aspect-ratio:1/0.82;border-radius:8px;font-size:11.5px;padding:4px;position:relative;color:var(--ink);}
+  .calCell.pad{visibility:hidden;}
+  .calCell.today{outline:1.5px solid var(--ink);}
+  .calCell .num{font-weight:600;}
+  .calCell .tag{font-size:8.5px;background:var(--accent-soft);color:var(--accent);border-radius:5px;
+    padding:1px 3px;margin-top:2px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  /* ---------- Filters ---------- */
+  .filterRow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .filterRow select,.filterRow input[type=text]{border:1px solid var(--line);background:var(--card);
+    border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--ink);}
+  .filterRow input[type=text]{flex:1;min-width:180px;}
+
+  /* ---------- List ---------- */
+  .listEmpty{text-align:center;color:var(--sub);padding:50px 20px;font-size:14px;}
+  .cCard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;
+    display:flex;align-items:center;gap:16px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
+  .cCard:hover{transform:translateY(-1px);}
+  .dday{flex:0 0 56px;text-align:center;border-radius:10px;padding:8px 4px;font-weight:800;font-size:13px;}
+  .dday small{display:block;font-weight:500;font-size:9.5px;margin-top:1px;}
+  .dday.ok{background:var(--good-soft);color:var(--good);}
+  .dday.warn{background:var(--warn-soft);color:var(--warn);}
+  .dday.danger{background:var(--danger-soft);color:var(--danger);}
+  .dday.done{background:#eee;color:#999;}
+  .cBody{flex:1;min-width:0;}
+  .cBody .name{font-weight:700;font-size:15px;margin-bottom:5px;}
+  .cTags{display:flex;gap:6px;flex-wrap:wrap;}
+  .tag{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--navy-soft);color:var(--navy);font-weight:600;}
+  .tag.alt{background:#f1f1ee;color:var(--sub);font-weight:500;}
+  .cReward{flex:0 0 auto;text-align:right;font-weight:700;font-size:14.5px;white-space:nowrap;}
+  .cReward .st{display:block;font-size:11px;font-weight:600;color:var(--sub);margin-top:3px;}
+
+  /* ---------- Modal ---------- */
+  .modalBg{display:none;position:fixed;inset:0;background:rgba(20,18,15,.42);z-index:50;
+    align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
+  .modalBg.show{display:flex;}
+  .modal{background:#fff;border-radius:18px;max-width:560px;width:100%;padding:28px 28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .modal h2{margin:0 0 20px;font-size:19px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:6px;font-weight:600;}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
+    padding:10px 11px;font-size:13.5px;background:#fbfaf8;}
+  .field textarea{resize:vertical;min-height:56px;}
+  .fieldRow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .checkRow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin:2px 0 14px;}
+  .modalActions{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+  .deleteBtn{background:none;border:none;color:var(--danger);font-size:13px;text-decoration:underline;padding:0;}
+  .modalRight{display:flex;gap:10px;}
+  .cancelBtn{background:none;border:none;color:var(--sub);font-size:13.5px;padding:10px 4px;}
+  .saveBtn{background:var(--ink);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-weight:600;font-size:13.5px;}
+
+  /* ---------- Toast ---------- */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;
+    opacity:0;transition:.25s;pointer-events:none;z-index:99;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media(max-width:820px){
+    .statGrid{grid-template-columns:1fr 1fr;}
+    .splitGrid{grid-template-columns:1fr;}
+    .fieldRow{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <div class="brandmark">체</div>
+  <h1>체험단 대시보드</h1>
+  <p>진행 중인 체험단 캠페인, 리뷰 마감일, 정산 상태를<br>한눈에 관리하세요.</p>
+  <button class="naverBtn" onclick="loginWithNaver()">
+    <svg viewBox="0 0 24 24" fill="#fff"><path d="M13.5 12.7 7.9 3H3v18h5.5V11.3L14.1 21H19V3h-5.5z"/></svg>
+    네이버로 로그인
+  </button>
+  <p id="loginError">로그인에 실패했어요. 다시 시도해 주세요.</p>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <div class="topbar">
+    <div>
+      <h1>체험단 대시보드</h1>
+      <div class="meta" id="metaLine">오늘 기준 · 캠페인 0건</div>
+    </div>
+    <div class="topbarRight">
+      <div class="userChip"><span class="dot" id="userInitial">?</span><span id="userName">-</span>
+        <button class="logoutBtn" onclick="logout()">로그아웃</button>
+      </div>
+      <button class="primaryBtn" onclick="openModal()">+ 캠페인 추가</button>
+    </div>
+  </div>
+
+  <div class="statGrid">
+    <div class="statCard"><div class="num" id="statOngoing">0</div><div class="label">진행중 캠페인</div></div>
+    <div class="statCard"><div class="num accent" id="statDue7">0</div><div class="label">7일 내 마감</div></div>
+    <div class="statCard"><div class="num" id="statPendingReview">0</div><div class="label">리뷰 등록 대기</div></div>
+    <div class="statCard"><div class="num" id="statPendingSettle">0</div><div class="label">정산 대기</div></div>
+  </div>
+
+  <div class="panel">
+    <h3>다가오는 마감 (14일) <span class="legend"><span class="sw"></span>리뷰마감</span></h3>
+    <div class="timelineTrack" id="timeline"></div>
+  </div>
+
+  <div class="splitGrid">
+    <div class="panel">
+      <h3>누적 체험단 혜택</h3>
+      <div class="donutWrap">
+        <canvas id="donutCanvas" width="140" height="140"></canvas>
+        <div style="flex:1">
+          <div class="donutTotal" id="donutTotal">0원</div>
+          <div class="donutList" id="donutList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="calHead">
+        <h3 style="margin:0" id="calTitle">2026년 7월</h3>
+        <div class="calNav">
+          <button onclick="calShift(-1)">‹</button>
+          <button onclick="calShift(1)">›</button>
+        </div>
+      </div>
+      <div class="calGrid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <div class="filterRow">
+    <select id="fSite" onchange="renderList()"><option value="">전체 사이트</option></select>
+    <select id="fCategory" onchange="renderList()">
+      <option value="">전체 카테고리</option>
+      <option value="식당">식당</option><option value="카페">카페</option>
+      <option value="뷰티">뷰티</option><option value="생활">생활</option><option value="기타">기타</option>
+    </select>
+    <select id="fStatus" onchange="renderList()">
+      <option value="">전체 상태</option><option value="진행중">진행중</option>
+      <option value="완료">완료</option><option value="취소">취소</option>
+    </select>
+    <input type="text" id="fSearch" placeholder="업체명, 태그 검색" oninput="renderList()">
+  </div>
+
+  <div id="listWrap"></div>
+</div>
+
+<!-- ================= MODAL ================= -->
+<div class="modalBg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">새 캠페인 추가</h2>
+    <input type="hidden" id="fId">
+    <div class="field"><label>업체명</label><input id="fName" placeholder="예: OO카페"></div>
+    <div class="fieldRow">
+      <div class="field"><label>캠페인 사이트</label><input id="fSiteInput" list="siteList" placeholder="예: 리뷰플레이스"></div>
+      <div class="field"><label>유형</label>
+        <select id="fType"><option value="방문형">방문형</option><option value="배송형">배송형</option></select>
+      </div>
+    </div>
+    <div class="fieldRow">
+      <div class="field"><label>카테고리</label>
+        <select id="fCategoryInput"><option>식당</option><option>카페</option><option>뷰티</option><option>생활</option><option>기타</option></select>
+      </div>
+      <div class="field"><label>예약방법</label>
+        <select id="fReserve"><option value="네이버예약">네이버예약</option><option value="전화예약">전화예약</option>
+          <option value="문자예약">문자예약</option><option value="워크인">워크인</option></select>
+      </div>
+    </div>
+    <div class="fieldRow">
+      <div class="field"><label>리뷰 등록 마감일</label><input type="date" id="fDeadline"></div>
+      <div class="field"><label>리뷰 상태</label>
+        <select id="fReviewStatus"><option value="작성전">작성전</option><option value="작성중">작성중</option>
+          <option value="작성완료">작성완료</option><option value="등록완료">등록완료</option></select>
+      </div>
+    </div>
+    <div class="fieldRow">
+      <div class="field"><label>정산 상태</label>
+        <select id="fSettle"><option value="해당없음">해당없음</option><option value="대기">대기</option><option value="완료">완료</option></select>
+      </div>
+      <div class="field"><label>보상 금액 (원)</label><input type="number" id="fReward" placeholder="예: 50000"></div>
+    </div>
+    <div class="field"><label>제공 내역</label><textarea id="fDetails" placeholder="예: 코스요리 2인, 5만원 상당 제품"></textarea></div>
+    <label class="checkRow"><input type="checkbox" id="fVlog"> 브이로그 영상 제작</label>
+    <div class="field"><label>태그 (쉼표로 구분)</label><input id="fTags" placeholder="예: 맛집, 재방문가능, 급함"></div>
+    <div class="field"><label>가이드라인</label><textarea id="fGuideline" placeholder="주소, 담당자 연락처, 촬영 가이드 등"></textarea></div>
+    <div class="field"><label>전체 상태</label>
+      <select id="fStatusInput"><option value="진행중">진행중</option><option value="완료">완료</option><option value="취소">취소</option></select>
+    </div>
+
+    <div class="modalActions">
+      <button class="deleteBtn" id="deleteBtn" style="visibility:hidden" onclick="deleteCampaign()">삭제</button>
+      <div class="modalRight">
+        <button class="cancelBtn" onclick="closeModal()">취소</button>
+        <button class="saveBtn" onclick="saveCampaignFromForm()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+<datalist id="siteList"></datalist>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================================
+   설정 — Cloudflare Worker 배포 후 아래 URL을 반드시 교체하세요.
+   예: https://rcd-dashboard-worker.<your-subdomain>.workers.dev
+   ========================================================================= */
+const WORKER_BASE = "https://REPLACE-WITH-YOUR-WORKER.workers.dev";
+
+let campaigns = [];
+let authToken = null;
+let userInfo = null;
+let calCursor = new Date();
+
+/* ---------------- Utils ---------------- */
+function uid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtWon(n){ return (n||0).toLocaleString('ko-KR')+'원'; }
+function fmtDateKR(d){
+  const dt = new Date(d+'T00:00:00');
+  const w = ['일','월','화','수','목','금','토'][dt.getDay()];
+  return `${dt.getMonth()+1}/${dt.getDate()}(${w})`;
+}
+function diffDays(dateStr){
+  const a = new Date(todayStr()+'T00:00:00');
+  const b = new Date(dateStr+'T00:00:00');
+  return Math.round((b-a)/86400000);
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------------- Auth: Naver Login ---------------- */
+async function loginWithNaver(){
+  try{
+    const res = await fetch(WORKER_BASE + '/api/config');
+    if(!res.ok) throw new Error('config fetch failed');
+    const cfg = await res.json();
+    const state = uid();
+    sessionStorage.setItem('naver_state', state);
+    const redirectUri = cfg.redirectUri || window.location.origin + window.location.pathname;
+    const url = `https://nid.naver.com/oauth2.0/authorize?response_type=code`
+      + `&client_id=${encodeURIComponent(cfg.naverClientId)}`
+      + `&redirect_uri=${encodeURIComponent(redirectUri)}`
+      + `&state=${encodeURIComponent(state)}`;
+    window.location.href = url;
+  }catch(e){
+    console.error(e);
+    document.getElementById('loginError').style.display='block';
+  }
+}
+
+async function handleNaverCallback(code, state){
+  const savedState = sessionStorage.getItem('naver_state');
+  if(state !== savedState){
+    document.getElementById('loginError').style.display='block';
+    return false;
+  }
+  try{
+    const res = await fetch(WORKER_BASE + '/api/auth/naver', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code, redirectUri: window.location.origin + window.location.pathname })
+    });
+    if(!res.ok) throw new Error('auth failed');
+    const data = await res.json();
+    authToken = data.token; userInfo = { name: data.name, email: data.email };
+    localStorage.setItem('rcd_token', authToken);
+    localStorage.setItem('rcd_user', JSON.stringify(userInfo));
+    return true;
+  }catch(e){
+    console.error(e);
+    document.getElementById('loginError').style.display='block';
+    return false;
+  }
+}
+
+function logout(){
+  localStorage.removeItem('rcd_token');
+  localStorage.removeItem('rcd_user');
+  authToken = null; userInfo = null;
+  location.href = window.location.origin + window.location.pathname;
+}
+
+async function authFetch(path, options={}){
+  const res = await fetch(WORKER_BASE + path, {
+    ...options,
+    headers:{ ...(options.headers||{}), 'Authorization': 'Bearer ' + authToken }
+  });
+  if(res.status === 401){ logout(); throw new Error('세션이 만료되었어요. 다시 로그인해 주세요.'); }
+  return res;
+}
+
+/* ---------------- Data load/save ---------------- */
+async function loadData(){
+  try{
+    const res = await authFetch('/api/data');
+    const data = await res.json();
+    campaigns = data.campaigns || [];
+  }catch(e){
+    console.error(e);
+    toast('데이터를 불러오지 못했어요');
+    campaigns = [];
+  }
+  renderAll();
+}
+
+async function persist(){
+  try{
+    await authFetch('/api/data', {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ campaigns })
+    });
+  }catch(e){
+    console.error(e);
+    toast('저장에 실패했어요. 네트워크를 확인해 주세요.');
+  }
+}
+
+/* ---------------- Render: all ---------------- */
+function renderAll(){
+  document.getElementById('metaLine').textContent =
+    `오늘 ${fmtDateKR(todayStr())} 기준 · 캠페인 ${campaigns.length}건`;
+  renderStats();
+  renderTimeline();
+  renderDonut();
+  renderCalendar();
+  renderSiteFilter();
+  renderList();
+}
+
+function renderStats(){
+  const ongoing = campaigns.filter(c=>c.status==='진행중');
+  const due7 = ongoing.filter(c=>c.deadline && diffDays(c.deadline)>=0 && diffDays(c.deadline)<=7);
+  const pendingReview = ongoing.filter(c=>['작성전','작성중'].includes(c.reviewStatus));
+  const pendingSettle = campaigns.filter(c=>c.settleStatus==='대기');
+  document.getElementById('statOngoing').textContent = ongoing.length;
+  document.getElementById('statDue7').textContent = due7.length;
+  document.getElementById('statPendingReview').textContent = pendingReview.length;
+  document.getElementById('statPendingSettle').textContent = pendingSettle.length;
+}
+
+function renderTimeline(){
+  const el = document.getElementById('timeline'); el.innerHTML='';
+  const start = new Date(); start.setHours(0,0,0,0);
+  for(let i=0;i<14;i++){
+    const d = new Date(start); d.setDate(d.getDate()+i);
+    const ds = d.toISOString().slice(0,10);
+    const dow = ['일','월','화','수','목','금','토'][d.getDay()];
+    const items = campaigns.filter(c=>c.deadline===ds && c.status==='진행중');
+    const div = document.createElement('div');
+    div.className = 'tDay' + (i===0?' today':'');
+    div.innerHTML = `<div class="dow">${d.getMonth()+1}/${d.getDate()}</div><div class="dnum">${dow}</div>
+      <div class="marker">${items.map(it=>`<span class="pill" title="${it.name}">${it.name}</span>`).join('')}</div>`;
+    el.appendChild(div);
+  }
+}
+
+function renderDonut(){
+  const cats = {};
+  campaigns.forEach(c=>{ cats[c.category||'기타'] = (cats[c.category||'기타']||0) + (Number(c.reward)||0); });
+  const total = Object.values(cats).reduce((a,b)=>a+b,0);
+  document.getElementById('donutTotal').textContent = fmtWon(total);
+  const colors = ['#c96a42','#2f3a5c','#c98a2e','#3f8f5f','#8a6bbd','#5c9db0'];
+  const canvas = document.getElementById('donutCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,140,140);
+  let start = -Math.PI/2;
+  const entries = Object.entries(cats).filter(([,v])=>v>0);
+  const list = document.getElementById('donutList'); list.innerHTML='';
+  if(entries.length===0){
+    ctx.beginPath(); ctx.arc(70,70,58,0,Math.PI*2); ctx.strokeStyle='#eee'; ctx.lineWidth=20; ctx.stroke();
+    list.innerHTML = '<div class="row" style="color:var(--sub)">아직 데이터가 없어요</div>';
+    return;
+  }
+  entries.forEach(([cat,val],i)=>{
+    const frac = val/total;
+    const end = start + frac*Math.PI*2;
+    ctx.beginPath(); ctx.arc(70,70,58,start,end);
+    ctx.strokeStyle = colors[i%colors.length]; ctx.lineWidth=20; ctx.stroke();
+    start = end;
+    const row = document.createElement('div'); row.className='row';
+    row.innerHTML = `<span class="sw" style="background:${colors[i%colors.length]}"></span>${cat}
+      <b>${fmtWon(val)} · ${Math.round(frac*100)}%</b>`;
+    list.appendChild(row);
+  });
+}
+
+function renderCalendar(){
+  const y = calCursor.getFullYear(), m = calCursor.getMonth();
+  document.getElementById('calTitle').textContent = `${y}년 ${m+1}월`;
+  const grid = document.getElementById('calGrid'); grid.innerHTML='';
+  ['일','월','화','수','목','금','토'].forEach(d=>{
+    const dv = document.createElement('div'); dv.className='dow'; dv.textContent=d; grid.appendChild(dv);
+  });
+  const first = new Date(y,m,1);
+  const startPad = first.getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  for(let i=0;i<startPad;i++){ const c=document.createElement('div'); c.className='calCell pad'; grid.appendChild(c); }
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const items = campaigns.filter(c=>c.deadline===ds);
+    const cell = document.createElement('div');
+    cell.className = 'calCell' + (ds===todayStr()?' today':'');
+    cell.innerHTML = `<div class="num">${d}</div>` + items.slice(0,2).map(it=>`<span class="tag" title="${it.name}">${it.name}</span>`).join('');
+    grid.appendChild(cell);
+  }
+}
+function calShift(dir){ calCursor.setMonth(calCursor.getMonth()+dir); renderCalendar(); }
+
+function renderSiteFilter(){
+  const sel = document.getElementById('fSite');
+  const cur = sel.value;
+  const sites = [...new Set(campaigns.map(c=>c.site).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">전체 사이트</option>' + sites.map(s=>`<option value="${s}">${s}</option>`).join('');
+  sel.value = cur;
+  const dl = document.getElementById('siteList');
+  dl.innerHTML = sites.map(s=>`<option value="${s}">`).join('');
+}
+
+function ddayClass(days, reviewStatus){
+  if(reviewStatus==='등록완료') return 'done';
+  if(days<0) return 'danger';
+  if(days<=3) return 'danger';
+  if(days<=7) return 'warn';
+  return 'ok';
+}
+
+function renderList(){
+  const site = document.getElementById('fSite').value;
+  const category = document.getElementById('fCategory').value;
+  const status = document.getElementById('fStatus').value;
+  const q = document.getElementById('fSearch').value.trim().toLowerCase();
+
+  let list = campaigns.filter(c=>{
+    if(site && c.site!==site) return false;
+    if(category && c.category!==category) return false;
+    if(status && c.status!==status) return false;
+    if(q){
+      const hay = (c.name+' '+(c.tags||[]).join(' ')).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  list.sort((a,b)=>(a.deadline||'9999').localeCompare(b.deadline||'9999'));
+
+  const wrap = document.getElementById('listWrap');
+  if(list.length===0){ wrap.innerHTML = '<div class="listEmpty">조건에 맞는 캠페인이 없어요. + 캠페인 추가로 새로 등록해 보세요.</div>'; return; }
+
+  wrap.innerHTML = list.map(c=>{
+    const days = c.deadline ? diffDays(c.deadline) : null;
+    const cls = days===null ? 'done' : ddayClass(days, c.reviewStatus);
+    const ddayLabel = days===null ? '-' : (days>=0 ? `D-${days}` : `D+${-days}`);
+    return `<div class="cCard" onclick="openModal('${c.id}')">
+      <div class="dday ${cls}">${ddayLabel}<small>${c.reviewStatus||''}</small></div>
+      <div class="cBody">
+        <div class="name">${escapeHtml(c.name||'(이름 없음)')}</div>
+        <div class="cTags">
+          <span class="tag">${escapeHtml(c.site||'-')}</span>
+          <span class="tag alt">${escapeHtml(c.category||'-')}</span>
+          <span class="tag alt">${escapeHtml(c.reserveMethod||'-')}</span>
+          ${(c.tags||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
+        </div>
+      </div>
+      <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
+    </div>`;
+  }).join('');
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ---------------- Modal ---------------- */
+function openModal(id){
+  const isEdit = !!id;
+  document.getElementById('modalTitle').textContent = isEdit ? '캠페인 수정' : '새 캠페인 추가';
+  document.getElementById('deleteBtn').style.visibility = isEdit ? 'visible' : 'hidden';
+  const c = isEdit ? campaigns.find(x=>x.id===id) : {};
+  document.getElementById('fId').value = c.id || '';
+  document.getElementById('fName').value = c.name || '';
+  document.getElementById('fSiteInput').value = c.site || '';
+  document.getElementById('fType').value = c.type || '방문형';
+  document.getElementById('fCategoryInput').value = c.category || '식당';
+  document.getElementById('fReserve').value = c.reserveMethod || '네이버예약';
+  document.getElementById('fDeadline').value = c.deadline || '';
+  document.getElementById('fReviewStatus').value = c.reviewStatus || '작성전';
+  document.getElementById('fSettle').value = c.settleStatus || '해당없음';
+  document.getElementById('fReward').value = c.reward || '';
+  document.getElementById('fDetails').value = c.details || '';
+  document.getElementById('fVlog').checked = !!c.vlog;
+  document.getElementById('fTags').value = (c.tags||[]).join(', ');
+  document.getElementById('fGuideline').value = c.guideline || '';
+  document.getElementById('fStatusInput').value = c.status || '진행중';
+  document.getElementById('modalBg').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
+
+function saveCampaignFromForm(){
+  const id = document.getElementById('fId').value || uid();
+  const name = document.getElementById('fName').value.trim();
+  if(!name){ toast('업체명을 입력해 주세요'); return; }
+  const obj = {
+    id,
+    name,
+    site: document.getElementById('fSiteInput').value.trim(),
+    type: document.getElementById('fType').value,
+    category: document.getElementById('fCategoryInput').value,
+    reserveMethod: document.getElementById('fReserve').value,
+    deadline: document.getElementById('fDeadline').value,
+    reviewStatus: document.getElementById('fReviewStatus').value,
+    settleStatus: document.getElementById('fSettle').value,
+    reward: Number(document.getElementById('fReward').value) || 0,
+    details: document.getElementById('fDetails').value.trim(),
+    vlog: document.getElementById('fVlog').checked,
+    tags: document.getElementById('fTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    guideline: document.getElementById('fGuideline').value.trim(),
+    status: document.getElementById('fStatusInput').value,
+    createdAt: (campaigns.find(x=>x.id===id)||{}).createdAt || new Date().toISOString()
+  };
+  const idx = campaigns.findIndex(x=>x.id===id);
+  if(idx>=0) campaigns[idx] = obj; else campaigns.push(obj);
+  closeModal();
+  renderAll();
+  persist();
+  toast('저장했어요');
+}
+
+function deleteCampaign(){
+  const id = document.getElementById('fId').value;
+  if(!id) return;
+  if(!confirm('이 캠페인을 삭제할까요?')) return;
+  campaigns = campaigns.filter(x=>x.id!==id);
+  closeModal();
+  renderAll();
+  persist();
+  toast('삭제했어요');
+}
+
+/* ---------------- Boot ---------------- */
+(async function boot(){
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code'), state = params.get('state');
+
+  const savedToken = localStorage.getItem('rcd_token');
+  const savedUser = localStorage.getItem('rcd_user');
+
+  if(code && state){
+    window.history.replaceState({}, '', window.location.pathname);
+    const ok = await handleNaverCallback(code, state);
+    if(!ok) return;
+  } else if(savedToken){
+    authToken = savedToken;
+    userInfo = savedUser ? JSON.parse(savedUser) : null;
+  } else {
+    return; // stay on login screen
+  }
+
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  if(userInfo){
+    document.getElementById('userName').textContent = userInfo.name || userInfo.email || '사용자';
+    document.getElementById('userInitial').textContent = (userInfo.name||'?').slice(0,1);
+  }
+  await loadData();
+})();
+</script>
+</body>
+</html>

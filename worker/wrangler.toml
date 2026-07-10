@@ -1,0 +1,17 @@
+name = "rcd-dashboard-worker"
+main = "src/worker.js"
+compatibility_date = "2026-01-01"
+
+# GitHub Pages 주소로 반드시 교체하세요 (마지막 슬래시 없이)
+# 예: https://jimmy-jib-dev.github.io
+[vars]
+ALLOWED_ORIGIN = "https://jimmy-jib-dev.github.io"
+DATA_FILENAME = "rcd_campaigns.json"
+
+# 아래 값들은 vars가 아니라 secrets로 등록합니다 (터미널에서 실행):
+#   wrangler secret put NAVER_CLIENT_ID
+#   wrangler secret put NAVER_CLIENT_SECRET
+#   wrangler secret put SESSION_SECRET
+#   wrangler secret put GOOGLE_CLIENT_ID
+#   wrangler secret put GOOGLE_CLIENT_SECRET
+#   wrangler secret put GOOGLE_REFRESH_TOKEN
