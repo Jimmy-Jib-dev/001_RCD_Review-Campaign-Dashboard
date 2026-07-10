@@ -107,6 +107,16 @@
   .calCell .tag{font-size:8.5px;background:var(--accent-soft);color:var(--accent);border-radius:5px;
     padding:1px 3px;margin-top:2px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
+  /* ---------- Site performance ---------- */
+  .siteRow{display:flex;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid #f2f0ec;}
+  .siteRow:last-child{border-bottom:none;}
+  .siteRow .siteRank{flex:0 0 20px;font-size:11px;color:var(--sub);font-weight:700;}
+  .siteRow .siteName{flex:0 0 120px;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .siteRow .barTrack{flex:1;height:10px;background:#f1efea;border-radius:6px;overflow:hidden;}
+  .siteRow .barFill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--navy));}
+  .siteRow .siteStats{flex:0 0 190px;text-align:right;font-size:12px;color:var(--sub);}
+  .siteRow .siteStats b{color:var(--ink);font-size:13px;}
+
   /* ---------- Filters ---------- */
   .filterRow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
   .filterRow select,.filterRow input[type=text]{border:1px solid var(--line);background:var(--card);
@@ -235,6 +245,11 @@
     </div>
   </div>
 
+  <div class="panel" id="sitePerfPanel">
+    <h3>사이트별 실적 <span class="legend">누적 리워드 기준</span></h3>
+    <div id="sitePerfList"></div>
+  </div>
+
   <div class="filterRow">
     <select id="fSite" onchange="renderList()"><option value="">전체 사이트</option></select>
     <select id="fCategory" onchange="renderList()">
@@ -253,7 +268,7 @@
 </div>
 
 <!-- ================= MODAL ================= -->
-<div class="modalBg" id="modalBg">
+<div class="modalBg" id="modalBg" onclick="if(event.target===this) closeModal()">
   <div class="modal">
     <h2 id="modalTitle">새 캠페인 추가</h2>
     <input type="hidden" id="fId">
@@ -284,7 +299,7 @@
       <div class="field"><label>정산 상태</label>
         <select id="fSettle"><option value="해당없음">해당없음</option><option value="대기">대기</option><option value="완료">완료</option></select>
       </div>
-      <div class="field"><label>보상 금액 (원)</label><input type="number" id="fReward" placeholder="예: 50000"></div>
+      <div class="field"><label>보상 금액 (원)</label><input type="text" inputmode="numeric" id="fReward" placeholder="예: 50,000" oninput="formatMoneyInput(this)"></div>
     </div>
     <div class="field"><label>제공 내역</label><textarea id="fDetails" placeholder="예: 코스요리 2인, 5만원 상당 제품"></textarea></div>
     <label class="checkRow"><input type="checkbox" id="fVlog"> 브이로그 영상 제작</label>
@@ -323,6 +338,10 @@ let calCursor = new Date();
 function uid(){ return crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random(); }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function fmtWon(n){ return (n||0).toLocaleString('ko-KR')+'원'; }
+function formatMoneyInput(el){
+  const digits = el.value.replace(/[^\d]/g,'');
+  el.value = digits ? Number(digits).toLocaleString('ko-KR') : '';
+}
 function fmtDateKR(d){
   const dt = new Date(d+'T00:00:00');
   const w = ['일','월','화','수','목','금','토'][dt.getDay()];
@@ -434,6 +453,7 @@ function renderAll(){
   renderTimeline();
   renderDonut();
   renderCalendar();
+  renderSitePerformance();
   renderSiteFilter();
   renderList();
 }
@@ -517,6 +537,33 @@ function renderCalendar(){
 }
 function calShift(dir){ calCursor.setMonth(calCursor.getMonth()+dir); renderCalendar(); }
 
+function renderSitePerformance(){
+  const el = document.getElementById('sitePerfList');
+  const bySite = {};
+  campaigns.forEach(c=>{
+    const key = c.site && c.site.trim() ? c.site.trim() : '(미지정)';
+    if(!bySite[key]) bySite[key] = { count:0, reward:0, done:0 };
+    bySite[key].count += 1;
+    bySite[key].reward += Number(c.reward)||0;
+    if(c.reviewStatus==='등록완료') bySite[key].done += 1;
+  });
+  const rows = Object.entries(bySite).sort((a,b)=>b[1].reward-a[1].reward);
+  if(rows.length===0){
+    el.innerHTML = '<div class="listEmpty" style="padding:24px 0">캠페인을 등록하면 사이트별 실적이 여기 표시돼요.</div>';
+    return;
+  }
+  const max = Math.max(...rows.map(r=>r[1].reward), 1);
+  el.innerHTML = rows.map(([site,d],i)=>{
+    const pct = Math.max(4, Math.round(d.reward/max*100));
+    return `<div class="siteRow">
+      <span class="siteRank">${i+1}</span>
+      <span class="siteName" title="${escapeHtml(site)}">${escapeHtml(site)}</span>
+      <span class="barTrack"><span class="barFill" style="width:${pct}%"></span></span>
+      <span class="siteStats"><b>${fmtWon(d.reward)}</b> · ${d.count}건 · 완료 ${d.done}</span>
+    </div>`;
+  }).join('');
+}
+
 function renderSiteFilter(){
   const sel = document.getElementById('fSite');
   const cur = sel.value;
@@ -592,7 +639,7 @@ function openModal(id){
   document.getElementById('fDeadline').value = c.deadline || '';
   document.getElementById('fReviewStatus').value = c.reviewStatus || '작성전';
   document.getElementById('fSettle').value = c.settleStatus || '해당없음';
-  document.getElementById('fReward').value = c.reward || '';
+  document.getElementById('fReward').value = c.reward ? Number(c.reward).toLocaleString('ko-KR') : '';
   document.getElementById('fDetails').value = c.details || '';
   document.getElementById('fVlog').checked = !!c.vlog;
   document.getElementById('fTags').value = (c.tags||[]).join(', ');
@@ -616,7 +663,7 @@ function saveCampaignFromForm(){
     deadline: document.getElementById('fDeadline').value,
     reviewStatus: document.getElementById('fReviewStatus').value,
     settleStatus: document.getElementById('fSettle').value,
-    reward: Number(document.getElementById('fReward').value) || 0,
+    reward: Number(document.getElementById('fReward').value.replace(/,/g,'')) || 0,
     details: document.getElementById('fDetails').value.trim(),
     vlog: document.getElementById('fVlog').checked,
     tags: document.getElementById('fTags').value.split(',').map(s=>s.trim()).filter(Boolean),
