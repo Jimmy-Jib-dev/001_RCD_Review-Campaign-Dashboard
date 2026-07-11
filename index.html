@@ -177,9 +177,12 @@
     padding:9px 16px;font-weight:700;font-size:13.5px;}
   .deleteBtnBig:hover{background:var(--danger);color:#fff;}
   .qeRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-  .qePill{display:inline-flex;align-items:center;gap:4px;background:#f1efea;border-radius:8px;padding:2px 6px 2px 8px;}
+  .qePill{display:inline-flex;align-items:center;gap:2px;background:#f1efea;border-radius:8px;padding:5px 8px;
+    font-size:11px;color:var(--sub);font-weight:600;white-space:nowrap;}
   .qePill select{border:none;background:transparent;font-family:inherit;font-size:11px;color:var(--ink);
-    padding:3px 2px;cursor:pointer;font-weight:600;}
+    padding:2px 2px 2px 0;cursor:pointer;font-weight:700;}
+  .qePill.receiptPill{cursor:pointer;color:var(--navy);background:var(--navy-soft);font-weight:700;}
+  .qePill.receiptPill:hover{background:#d4d9ea;}
   .statusPill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;}
   .statusPill.done{background:var(--good-soft);color:var(--good);}
   .statusPill.progress{background:var(--warn-soft);color:var(--warn);}
@@ -777,9 +780,11 @@ function renderList(){
           ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
         </div>
         <div class="qeRow" onclick="event.stopPropagation()">
-          <span class="qePill">📅<select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></span>
-          <span class="qePill">✍️<select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></span>
-          <span class="qePill">💰<select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></span>
+          <span class="qePill">예약방법: <select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></span>
+          <span class="qePill">리뷰상태: <select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></span>
+          <span class="qePill">정산상태: <select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></span>
+          ${c.naverReviewRequired ? `<span class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></span>` : ''}
+          ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
         </div>
       </div>
       <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
