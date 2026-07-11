@@ -148,6 +148,50 @@ async function writeDataFile(accessToken, fileId, content) {
   if (!res.ok) throw new Error("drive write failed: " + (await res.text()));
 }
 
+function base64ToBytes(base64) {
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+async function uploadReceiptFile(accessToken, filename, mimeType, base64Data) {
+  const boundary = "rcdreceiptboundary";
+  const metadata = { name: filename };
+  const fileBytes = base64ToBytes(base64Data);
+
+  const enc = new TextEncoder();
+  const head = enc.encode(
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`
+  );
+  const tail = enc.encode(`\r\n--${boundary}--`);
+  const body = new Uint8Array(head.length + fileBytes.length + tail.length);
+  body.set(head, 0);
+  body.set(fileBytes, head.length);
+  body.set(tail, head.length + fileBytes.length);
+
+  const res = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink",
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+      body,
+    }
+  );
+  if (!res.ok) throw new Error("drive upload failed: " + (await res.text()));
+  const data = await res.json();
+
+  // 링크를 아는 사람은 누구나 열람 가능하도록 권한 부여 (전용 계정 로그인 없이 조회 가능)
+  await fetch(`https://www.googleapis.com/drive/v3/files/${data.id}/permissions`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ role: "reader", type: "anyone" }),
+  });
+
+  return { id: data.id, link: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view` };
+}
+
 /* ---------------- Route handlers ---------------- */
 async function handleConfig(request, env) {
   const url = new URL(request.url);
@@ -183,6 +227,16 @@ async function handleNaverAuth(request, env) {
   if (profileData.resultcode !== "00") return json({ error: "naver profile fetch failed" }, 401, env);
 
   const p = profileData.response;
+
+  // 허용된 이메일만 로그인 가능하도록 제한
+  const allowed = (env.ALLOWED_EMAILS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  if (allowed.length > 0 && !allowed.includes((p.email || "").toLowerCase())) {
+    return json({ error: "이 계정은 접근이 허용되지 않았어요." }, 403, env);
+  }
+
   const exp = Date.now() + 1000 * 60 * 60 * 24 * 14; // 14일 세션
   const token = await signToken({ sub: p.id, name: p.name, email: p.email, exp }, env.SESSION_SECRET);
 
@@ -218,6 +272,19 @@ async function handlePutData(request, env) {
   return json({ ok: true }, 200, env);
 }
 
+async function handleUpload(request, env) {
+  const session = await requireAuth(request, env);
+  if (!session) return json({ error: "unauthorized" }, 401, env);
+
+  const body = await request.json();
+  const { filename, mimeType, dataBase64 } = body;
+  if (!filename || !dataBase64) return json({ error: "missing filename or dataBase64" }, 400, env);
+
+  const accessToken = await getGoogleAccessToken(env);
+  const result = await uploadReceiptFile(accessToken, filename, mimeType || "application/octet-stream", dataBase64);
+  return json(result, 200, env);
+}
+
 /* ---------------- Entry ---------------- */
 export default {
   async fetch(request, env) {
@@ -239,6 +306,9 @@ export default {
       }
       if (url.pathname === "/api/data" && request.method === "PUT") {
         return await handlePutData(request, env);
+      }
+      if (url.pathname === "/api/upload" && request.method === "POST") {
+        return await handleUpload(request, env);
       }
       return json({ error: "not found" }, 404, env);
     } catch (e) {

@@ -173,6 +173,20 @@
   .checkRow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin:2px 0 14px;}
   .modalActions{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
   .deleteBtn{background:none;border:none;color:var(--danger);font-size:13px;text-decoration:underline;padding:0;}
+  .deleteBtnBig{background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger);border-radius:9px;
+    padding:9px 16px;font-weight:700;font-size:13.5px;}
+  .deleteBtnBig:hover{background:var(--danger);color:#fff;}
+  .qeRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .qePill{display:inline-flex;align-items:center;gap:4px;background:#f1efea;border-radius:8px;padding:2px 6px 2px 8px;}
+  .qePill select{border:none;background:transparent;font-family:inherit;font-size:11px;color:var(--ink);
+    padding:3px 2px;cursor:pointer;font-weight:600;}
+  .statusPill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;}
+  .statusPill.done{background:var(--good-soft);color:var(--good);}
+  .statusPill.progress{background:var(--warn-soft);color:var(--warn);}
+  .receiptChip{display:inline-flex;align-items:center;gap:8px;background:#f1efea;border-radius:8px;
+    padding:6px 10px;margin-top:8px;font-size:12.5px;}
+  .receiptChip a{color:var(--navy);font-weight:600;text-decoration:none;}
+  .receiptChip button{background:none;border:none;color:var(--sub);cursor:pointer;font-size:13px;}
   .modalRight{display:flex;gap:10px;}
   .cancelBtn{background:none;border:none;color:var(--sub);font-size:13.5px;padding:10px 4px;}
   .saveBtn{background:var(--ink);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-weight:600;font-size:13.5px;}
@@ -248,6 +262,14 @@
           <div class="donutList" id="donutList"></div>
         </div>
       </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0 12px">
+      <h3 style="font-size:12.5px;color:var(--sub);margin-bottom:10px">상태별 현황</h3>
+      <div class="donutWrap">
+        <canvas id="statusDonutCanvas" width="90" height="90"></canvas>
+        <div style="flex:1">
+          <div class="donutList" id="statusDonutList"></div>
+        </div>
+      </div>
     </div>
     <div class="panel">
       <div class="calHead">
@@ -275,7 +297,7 @@
     </select>
     <select id="fStatus" onchange="renderList()">
       <option value="">전체 상태</option><option value="진행중">진행중</option>
-      <option value="완료">완료</option><option value="취소">취소</option>
+      <option value="완료">완료</option>
     </select>
     <input type="text" id="fSearch" placeholder="업체명, 태그 검색" oninput="renderList()">
   </div>
@@ -322,15 +344,33 @@
       <div class="field"><label>보상 금액 (원)</label><input type="text" inputmode="numeric" id="fReward" placeholder="예: 50,000" oninput="formatMoneyInput(this)"></div>
     </div>
     <div class="field"><label>제공 내역</label><textarea id="fDetails" placeholder="예: 코스요리 2인, 5만원 상당 제품"></textarea></div>
-    <label class="checkRow"><input type="checkbox" id="fVlog"> 브이로그 영상 제작</label>
-    <div class="field"><label>태그 (쉼표로 구분)</label><input id="fTags" placeholder="예: 맛집, 재방문가능, 급함"></div>
+    <div class="fieldRow">
+      <label class="checkRow" style="margin:2px 0"><input type="checkbox" id="fVlog"> 클립영상 제작</label>
+      <label class="checkRow" style="margin:2px 0"><input type="checkbox" id="fNaverReviewRequired" onchange="toggleNaverReviewField()"> 네이버 리뷰 업로드 필요</label>
+    </div>
+    <div class="field" id="naverReviewField" style="display:none">
+      <label>네이버 리뷰 상태</label>
+      <select id="fNaverReviewStatus"><option value="작성전">작성전</option><option value="작성중">작성중</option>
+        <option value="작성완료">작성완료</option><option value="등록완료">등록완료</option></select>
+    </div>
+    <div class="fieldRow">
+      <div class="field"><label>Type.1 태그 (쉼표로 구분)</label><input id="fTagsType1" placeholder="예: 맛집, 재방문가능"></div>
+      <div class="field"><label>Type.2 태그 (쉼표로 구분)</label><input id="fTagsType2" placeholder="예: 급함, 컷수3장"></div>
+    </div>
     <div class="field"><label>가이드라인</label><textarea id="fGuideline" placeholder="주소, 담당자 연락처, 촬영 가이드 등"></textarea></div>
-    <div class="field"><label>전체 상태</label>
-      <select id="fStatusInput"><option value="진행중">진행중</option><option value="완료">완료</option><option value="취소">취소</option></select>
+    <div class="field">
+      <label>영수증</label>
+      <button type="button" class="ghostBtn" onclick="document.getElementById('fReceiptFile').click()">📎 영수증 첨부</button>
+      <input type="file" id="fReceiptFile" accept="image/*,application/pdf" style="display:none" onchange="handleReceiptUpload(this)">
+      <div id="receiptPreview"></div>
+    </div>
+    <div class="field">
+      <label>전체 상태 <span style="font-weight:400;color:var(--sub)">(정산·리뷰 상태에 따라 자동 계산돼요)</span></label>
+      <div id="statusPreview"></div>
     </div>
 
     <div class="modalActions">
-      <button class="deleteBtn" id="deleteBtn" style="visibility:hidden" onclick="deleteCampaign()">삭제</button>
+      <button class="deleteBtnBig" id="deleteBtn" style="visibility:hidden" onclick="deleteCampaign()">🗑 삭제</button>
       <div class="modalRight">
         <button class="cancelBtn" onclick="closeModal()">취소</button>
         <button class="saveBtn" onclick="saveCampaignFromForm()">저장</button>
@@ -506,6 +546,7 @@ function renderAll(){
   renderStats();
   renderTimeline();
   renderDonut();
+  renderStatusDonut();
   renderCalendar();
   renderSitePerformance();
   renderSiteFilter();
@@ -521,6 +562,38 @@ function renderStats(){
   document.getElementById('statDue7').textContent = due7.length;
   document.getElementById('statPendingReview').textContent = pendingReview.length;
   document.getElementById('statPendingSettle').textContent = pendingSettle.length;
+}
+
+function computeStatus(c){
+  const baseOk = c.settleStatus === '완료' && c.reviewStatus === '등록완료';
+  const naverOk = c.naverReviewRequired ? (c.naverReviewStatus === '등록완료') : true;
+  return (baseOk && naverOk) ? '완료' : '진행중';
+}
+
+function renderStatusDonut(){
+  const done = campaigns.filter(c=>c.status==='완료').length;
+  const progress = campaigns.length - done;
+  const canvas = document.getElementById('statusDonutCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,90,90);
+  const list = document.getElementById('statusDonutList'); list.innerHTML='';
+  if(campaigns.length===0){
+    ctx.beginPath(); ctx.arc(45,45,36,0,Math.PI*2); ctx.strokeStyle='#eee'; ctx.lineWidth=13; ctx.stroke();
+    list.innerHTML = '<div class="row" style="color:var(--sub)">아직 데이터가 없어요</div>';
+    return;
+  }
+  const parts = [['진행중', progress, '#c98a2e'], ['완료', done, '#3f8f5f']].filter(p=>p[1]>0);
+  let start = -Math.PI/2;
+  parts.forEach(([label,val,color])=>{
+    const frac = val/campaigns.length;
+    const end = start + frac*Math.PI*2;
+    ctx.beginPath(); ctx.arc(45,45,36,start,end);
+    ctx.strokeStyle = color; ctx.lineWidth = 13; ctx.stroke();
+    start = end;
+    const row = document.createElement('div'); row.className='row';
+    row.innerHTML = `<span class="sw" style="background:${color}"></span>${label} <b>${val}건</b>`;
+    list.appendChild(row);
+  });
 }
 
 function renderTimeline(){
@@ -672,7 +745,7 @@ function renderList(){
     if(category && c.category!==category) return false;
     if(status && c.status!==status) return false;
     if(q){
-      const hay = (c.name+' '+(c.tags||[]).join(' ')).toLowerCase();
+      const hay = (c.name+' '+(c.tagsType1||[]).join(' ')+' '+(c.tagsType2||[]).join(' ')).toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -682,19 +755,31 @@ function renderList(){
   const wrap = document.getElementById('listWrap');
   if(list.length===0){ wrap.innerHTML = '<div class="listEmpty">조건에 맞는 캠페인이 없어요. + 캠페인 추가로 새로 등록해 보세요.</div>'; return; }
 
+  const RESERVE_OPTS = ['네이버예약','전화예약','문자예약','워크인'];
+  const REVIEW_OPTS = ['작성전','작성중','작성완료','등록완료'];
+  const SETTLE_OPTS = ['해당없음','대기','완료'];
+  const opt = (opts, cur) => opts.map(o=>`<option value="${o}" ${o===cur?'selected':''}>${o}</option>`).join('');
+
   wrap.innerHTML = list.map(c=>{
     const days = c.deadline ? diffDays(c.deadline) : null;
     const cls = days===null ? 'done' : ddayClass(days, c.reviewStatus);
     const ddayLabel = days===null ? '-' : (days>=0 ? `D-${days}` : `D+${-days}`);
+    const statusCls = c.status==='완료' ? 'done' : 'progress';
+    const allTags = [...(c.tagsType1||[]).map(t=>'T1:'+t), ...(c.tagsType2||[]).map(t=>'T2:'+t)];
     return `<div class="cCard" onclick="openModal('${c.id}')">
       <div class="dday ${cls}">${ddayLabel}<small>${c.reviewStatus||''}</small></div>
       <div class="cBody">
-        <div class="name">${escapeHtml(c.name||'(이름 없음)')}</div>
+        <div class="name">${escapeHtml(c.name||'(이름 없음)')}<span class="statusPill ${statusCls}">${c.status}</span></div>
         <div class="cTags">
           <span class="tag">${escapeHtml(c.site||'-')}</span>
           <span class="tag alt">${escapeHtml(c.category||'-')}</span>
-          <span class="tag alt">${escapeHtml(c.reserveMethod||'-')}</span>
-          ${(c.tags||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
+          ${(c.tagsType1||[]).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+          ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
+        </div>
+        <div class="qeRow" onclick="event.stopPropagation()">
+          <span class="qePill">📅<select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></span>
+          <span class="qePill">✍️<select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></span>
+          <span class="qePill">💰<select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></span>
         </div>
       </div>
       <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
@@ -702,6 +787,15 @@ function renderList(){
   }).join('');
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function quickUpdate(id, field, value){
+  const c = campaigns.find(x=>x.id===id); if(!c) return;
+  c[field] = value;
+  c.status = computeStatus(c);
+  renderAll();
+  persist();
+  toast('업데이트했어요');
+}
 
 /* ---------------- Modal ---------------- */
 function openModal(id){
@@ -730,12 +824,60 @@ function openModal(id){
   document.getElementById('fReward').value = c.reward ? Number(c.reward).toLocaleString('ko-KR') : '';
   document.getElementById('fDetails').value = c.details || '';
   document.getElementById('fVlog').checked = !!c.vlog;
-  document.getElementById('fTags').value = (c.tags||[]).join(', ');
+  document.getElementById('fNaverReviewRequired').checked = !!c.naverReviewRequired;
+  document.getElementById('fNaverReviewStatus').value = c.naverReviewStatus || '작성전';
+  toggleNaverReviewField();
+  document.getElementById('fTagsType1').value = (c.tagsType1||[]).join(', ');
+  document.getElementById('fTagsType2').value = (c.tagsType2||[]).join(', ');
   document.getElementById('fGuideline').value = c.guideline || '';
-  document.getElementById('fStatusInput').value = c.status || '진행중';
+  currentReceipt = c.receipt || null;
+  renderReceiptPreview();
+  renderStatusPreview(c.id ? computeStatus(c) : '진행중');
   document.getElementById('modalBg').classList.add('show');
 }
 function closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
+
+function toggleNaverReviewField(){
+  document.getElementById('naverReviewField').style.display =
+    document.getElementById('fNaverReviewRequired').checked ? 'block' : 'none';
+}
+
+let currentReceipt = null;
+function renderReceiptPreview(){
+  const el = document.getElementById('receiptPreview');
+  if(!currentReceipt){ el.innerHTML=''; return; }
+  el.innerHTML = `<div class="receiptChip"><a href="${currentReceipt.url}" target="_blank" rel="noopener">📄 ${escapeHtml(currentReceipt.name)}</a>
+    <button type="button" onclick="currentReceipt=null; renderReceiptPreview()">✕</button></div>`;
+}
+async function handleReceiptUpload(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1];
+    toast('영수증 업로드 중...');
+    try{
+      const res = await authFetch('/api/upload', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ filename: file.name, mimeType: file.type || 'application/octet-stream', dataBase64: base64 })
+      });
+      const data = await res.json();
+      if(!data.link) throw new Error('no link');
+      currentReceipt = { name: file.name, url: data.link };
+      renderReceiptPreview();
+      toast('영수증을 첨부했어요');
+    }catch(e){
+      console.error(e);
+      toast('영수증 업로드에 실패했어요');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderStatusPreview(status){
+  const el = document.getElementById('statusPreview');
+  const cls = status==='완료' ? 'done' : 'progress';
+  el.innerHTML = `<span class="statusPill ${cls}" style="font-size:12.5px;padding:6px 14px">${status}</span>`;
+}
 
 function saveCampaignFromForm(){
   const id = document.getElementById('fId').value || uid();
@@ -757,11 +899,15 @@ function saveCampaignFromForm(){
     reward: Number(document.getElementById('fReward').value.replace(/,/g,'')) || 0,
     details: document.getElementById('fDetails').value.trim(),
     vlog: document.getElementById('fVlog').checked,
-    tags: document.getElementById('fTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    naverReviewRequired: document.getElementById('fNaverReviewRequired').checked,
+    naverReviewStatus: document.getElementById('fNaverReviewStatus').value,
+    tagsType1: document.getElementById('fTagsType1').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tagsType2: document.getElementById('fTagsType2').value.split(',').map(s=>s.trim()).filter(Boolean),
     guideline: document.getElementById('fGuideline').value.trim(),
-    status: document.getElementById('fStatusInput').value,
+    receipt: currentReceipt,
     createdAt: (campaigns.find(x=>x.id===id)||{}).createdAt || new Date().toISOString()
   };
+  obj.status = computeStatus(obj);
   const idx = campaigns.findIndex(x=>x.id===id);
   if(idx>=0) campaigns[idx] = obj; else campaigns.push(obj);
   closeModal();
