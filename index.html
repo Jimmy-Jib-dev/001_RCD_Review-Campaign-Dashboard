@@ -176,7 +176,7 @@
   .listEmpty{text-align:center;color:var(--sub);padding:50px 20px;font-size:14px;}
   .cCard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;
     display:flex;align-items:center;gap:16px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
-  .cCard:hover{transform:translateY(-1px);}
+  .cCard{touch-action:manipulation;}
   .cBody{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
   .cHeadRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .cTitle{font-weight:700;font-size:16px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;
@@ -202,15 +202,16 @@
   .modalBg{display:none;position:fixed;inset:0;background:rgba(20,18,15,.42);z-index:50;
     align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
   .modalBg.show{display:flex;}
-  .modal{background:#fff;border-radius:18px;max-width:560px;width:100%;padding:28px 28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+  .modal{background:#fff;border-radius:18px;max-width:560px;width:100%;padding:28px 28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative;}
   .modal h2{margin:0 0 18px;font-size:19px;}
   .modalHeadRow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
   .modalHeadRow h2{margin:0;}
   .modalHeadRight{display:flex;align-items:center;gap:14px;}
   .modalHeadRight #statusPreview{text-align:right;}
   .modalHeadRight #statusPreview .statusReasons{justify-content:flex-end;max-width:220px;}
-  .modalCloseX{background:none;border:none;font-size:22px;color:var(--sub);cursor:pointer;line-height:1;padding:2px 2px;}
+  .modalCloseX{position:absolute;top:22px;right:24px;background:none;border:none;font-size:22px;color:var(--sub);cursor:pointer;line-height:1;padding:4px;}
   .modalCloseX:hover{color:var(--ink);}
+  .modalHeadRow{padding-right:30px;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:6px;font-weight:600;}
   .fieldLabelRow{display:flex;align-items:center;gap:12px;flex-wrap:nowrap;}
@@ -282,17 +283,26 @@
     .siteRow .siteStats{flex:0 0 auto;font-size:11px;white-space:normal;text-align:right;}
     .timelineTrack{gap:0;}
     .tDay{flex:0 0 62px;}
-    .cCard{flex-direction:column;align-items:stretch;gap:10px;padding:14px;}
-    .dday{align-self:flex-start;}
-    .cTitle{font-size:14.5px;}
-    .qeBox{flex-wrap:wrap;width:100%;}
+    .cCard{display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:6px 10px;padding:14px;}
+    .cBody{display:contents;}
+    .cReward{display:contents;}
+    .dday{grid-column:1;grid-row:1;align-self:center;}
+    .cTitle{grid-column:2;grid-row:1;align-self:center;font-size:14.5px;}
+    .statusPill.big{grid-column:3;grid-row:1;justify-self:end;align-self:center;}
+    .cHeadRow{grid-column:1/-1;grid-row:2;}
+    .cReason{grid-column:1/-1;grid-row:3;text-align:left;max-width:100%;margin-top:0;}
+    .cRewardAmt{grid-column:1/-1;grid-row:4;text-align:right;font-size:16px;}
+    .qeBox{grid-column:1/-1;grid-row:5;flex-wrap:wrap;width:100%;}
+    .cSubRow{grid-column:1/-1;grid-row:6;width:100%;}
     .qeBox .qePill{border-right:none;border-bottom:1px solid var(--line);width:100%;}
     .qeBox .qePill:last-child{border-bottom:none;}
     .qePill select{max-width:100%;}
-    .cSubRow{width:100%;}
-    .cReward{flex-direction:row;align-items:center;justify-content:space-between;width:100%;text-align:left;flex-wrap:wrap;gap:8px;}
-    .cReward .cRewardAmt{order:2;}
-    .cReward .st{order:3;}
+    .modalHeadRow{padding-right:36px;}
+    .modalHeadRight{justify-content:flex-start;}
+    .modalHeadRight #statusPreview{text-align:left;}
+    .modalHeadRight #statusPreview .statusReasons{justify-content:flex-start;max-width:100%;}
+    .field input[type=date]{text-align:left;}
+    .fieldLabelRow{flex-wrap:wrap;row-gap:8px;}
   }
 </style>
 </head>
@@ -485,7 +495,7 @@
     <div class="modalActions">
       <button class="cancelBtn" onclick="closeModal()">취소</button>
       <button class="saveBtn" onclick="saveCampaignFromForm()">저장</button>
-      <button class="deleteBtnBig" id="deleteBtn" style="display:none" onclick="deleteCampaign()">🗑 삭제</button>
+      <button class="deleteBtnBig" id="deleteBtn" style="display:none" onclick="deleteCampaign()">삭제</button>
     </div>
   </div>
 </div>
