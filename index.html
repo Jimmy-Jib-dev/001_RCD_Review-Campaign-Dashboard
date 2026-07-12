@@ -186,6 +186,9 @@
   .statusPill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;}
   .statusPill.done{background:var(--good-soft);color:var(--good);}
   .statusPill.progress{background:var(--warn-soft);color:var(--warn);}
+  .statusReasons{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
+  .reasonChip{font-size:10.5px;background:var(--warn-soft);color:var(--warn);padding:3px 8px;border-radius:6px;font-weight:600;}
+  .cReason{font-size:10.5px;color:var(--warn);margin-top:5px;font-weight:600;}
   .receiptChip{display:inline-flex;align-items:center;gap:8px;background:#f1efea;border-radius:8px;
     padding:6px 10px;margin-top:8px;font-size:12.5px;}
   .receiptChip a{color:var(--navy);font-weight:600;text-decoration:none;}
@@ -315,6 +318,16 @@
     <input type="hidden" id="fId">
     <div class="field"><label>업체명</label><input id="fName" placeholder="예: OO카페"></div>
     <div class="fieldRow">
+      <label class="checkRow" style="margin:2px 0"><input type="checkbox" id="fVlog"> 클립영상 제작</label>
+      <label class="checkRow" style="margin:2px 0"><input type="checkbox" id="fReservationDone" onchange="refreshStatusPreview()"> 예약 완료</label>
+    </div>
+    <label class="checkRow" style="margin:2px 0 14px"><input type="checkbox" id="fNaverReviewRequired" onchange="toggleNaverReviewField(); refreshStatusPreview()"> 네이버 리뷰 업로드 필요</label>
+    <div class="field" id="naverReviewField" style="display:none">
+      <label>네이버 리뷰 상태</label>
+      <select id="fNaverReviewStatus" onchange="refreshStatusPreview()"><option value="작성전">작성전</option><option value="작성중">작성중</option>
+        <option value="작성완료">작성완료</option><option value="등록완료">등록완료</option></select>
+    </div>
+    <div class="fieldRow">
       <div class="field">
         <label>캠페인 사이트</label>
         <select id="fSiteSelect" onchange="handleSiteSelectChange()"></select>
@@ -336,26 +349,17 @@
     <div class="fieldRow">
       <div class="field"><label>리뷰 등록 마감일</label><input type="date" id="fDeadline"></div>
       <div class="field"><label>리뷰 상태</label>
-        <select id="fReviewStatus"><option value="작성전">작성전</option><option value="작성중">작성중</option>
+        <select id="fReviewStatus" onchange="refreshStatusPreview()"><option value="작성전">작성전</option><option value="작성중">작성중</option>
           <option value="작성완료">작성완료</option><option value="등록완료">등록완료</option></select>
       </div>
     </div>
     <div class="fieldRow">
       <div class="field"><label>정산 상태</label>
-        <select id="fSettle"><option value="해당없음">해당없음</option><option value="대기">대기</option><option value="완료">완료</option></select>
+        <select id="fSettle" onchange="refreshStatusPreview()"><option value="해당없음">해당없음</option><option value="대기">대기</option><option value="완료">완료</option></select>
       </div>
       <div class="field"><label>보상 금액 (원)</label><input type="text" inputmode="numeric" id="fReward" placeholder="예: 50,000" oninput="formatMoneyInput(this)"></div>
     </div>
     <div class="field"><label>제공 내역</label><textarea id="fDetails" placeholder="예: 코스요리 2인, 5만원 상당 제품"></textarea></div>
-    <div class="fieldRow">
-      <label class="checkRow" style="margin:2px 0"><input type="checkbox" id="fVlog"> 클립영상 제작</label>
-      <label class="checkRow" style="margin:2px 0"><input type="checkbox" id="fNaverReviewRequired" onchange="toggleNaverReviewField()"> 네이버 리뷰 업로드 필요</label>
-    </div>
-    <div class="field" id="naverReviewField" style="display:none">
-      <label>네이버 리뷰 상태</label>
-      <select id="fNaverReviewStatus"><option value="작성전">작성전</option><option value="작성중">작성중</option>
-        <option value="작성완료">작성완료</option><option value="등록완료">등록완료</option></select>
-    </div>
     <div class="fieldRow">
       <div class="field"><label>Type.1 태그 (쉼표로 구분)</label><input id="fTagsType1" placeholder="예: 맛집, 재방문가능"></div>
       <div class="field"><label>Type.2 태그 (쉼표로 구분)</label><input id="fTagsType2" placeholder="예: 급함, 컷수3장"></div>
@@ -368,7 +372,7 @@
       <div id="receiptPreview"></div>
     </div>
     <div class="field">
-      <label>전체 상태 <span style="font-weight:400;color:var(--sub)">(정산·리뷰 상태에 따라 자동 계산돼요)</span></label>
+      <label>전체 상태 <span style="font-weight:400;color:var(--sub)">(예약·정산·리뷰 상태에 따라 자동 계산돼요)</span></label>
       <div id="statusPreview"></div>
     </div>
 
@@ -568,9 +572,18 @@ function renderStats(){
 }
 
 function computeStatus(c){
-  const baseOk = c.settleStatus === '완료' && c.reviewStatus === '등록완료';
+  const baseOk = !!c.reservationDone && c.settleStatus === '완료' && c.reviewStatus === '등록완료';
   const naverOk = c.naverReviewRequired ? (c.naverReviewStatus === '등록완료') : true;
   return (baseOk && naverOk) ? '완료' : '진행중';
+}
+
+function statusReasons(c){
+  const reasons = [];
+  if(!c.reservationDone) reasons.push('예약 미완료');
+  if(c.reviewStatus !== '등록완료') reasons.push('리뷰 미등록');
+  if(c.settleStatus !== '완료') reasons.push('정산 미완료');
+  if(c.naverReviewRequired && c.naverReviewStatus !== '등록완료') reasons.push('네이버 리뷰 미등록');
+  return reasons;
 }
 
 function renderStatusDonut(){
@@ -786,6 +799,7 @@ function renderList(){
           ${c.naverReviewRequired ? `<span class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></span>` : ''}
           ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
         </div>
+        ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
       </div>
       <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
     </div>`;
@@ -829,6 +843,7 @@ function openModal(id){
   document.getElementById('fReward').value = c.reward ? Number(c.reward).toLocaleString('ko-KR') : '';
   document.getElementById('fDetails').value = c.details || '';
   document.getElementById('fVlog').checked = !!c.vlog;
+  document.getElementById('fReservationDone').checked = !!c.reservationDone;
   document.getElementById('fNaverReviewRequired').checked = !!c.naverReviewRequired;
   document.getElementById('fNaverReviewStatus').value = c.naverReviewStatus || '작성전';
   toggleNaverReviewField();
@@ -837,7 +852,7 @@ function openModal(id){
   document.getElementById('fGuideline').value = c.guideline || '';
   currentReceipt = c.receipt || null;
   renderReceiptPreview();
-  renderStatusPreview(c.id ? computeStatus(c) : '진행중');
+  refreshStatusPreview();
   document.getElementById('modalBg').classList.add('show');
 }
 function closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
@@ -878,10 +893,25 @@ async function handleReceiptUpload(input){
   reader.readAsDataURL(file);
 }
 
-function renderStatusPreview(status){
+function renderStatusPreview(status, reasons){
   const el = document.getElementById('statusPreview');
   const cls = status==='완료' ? 'done' : 'progress';
-  el.innerHTML = `<span class="statusPill ${cls}" style="font-size:12.5px;padding:6px 14px">${status}</span>`;
+  let html = `<span class="statusPill ${cls}" style="font-size:12.5px;padding:6px 14px">${status}</span>`;
+  if(status!=='완료' && reasons && reasons.length){
+    html += `<div class="statusReasons">${reasons.map(r=>`<span class="reasonChip">${escapeHtml(r)}</span>`).join('')}</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function refreshStatusPreview(){
+  const partial = {
+    reviewStatus: document.getElementById('fReviewStatus').value,
+    settleStatus: document.getElementById('fSettle').value,
+    reservationDone: document.getElementById('fReservationDone').checked,
+    naverReviewRequired: document.getElementById('fNaverReviewRequired').checked,
+    naverReviewStatus: document.getElementById('fNaverReviewStatus').value,
+  };
+  renderStatusPreview(computeStatus(partial), statusReasons(partial));
 }
 
 function saveCampaignFromForm(){
@@ -904,6 +934,7 @@ function saveCampaignFromForm(){
     reward: Number(document.getElementById('fReward').value.replace(/,/g,'')) || 0,
     details: document.getElementById('fDetails').value.trim(),
     vlog: document.getElementById('fVlog').checked,
+    reservationDone: document.getElementById('fReservationDone').checked,
     naverReviewRequired: document.getElementById('fNaverReviewRequired').checked,
     naverReviewStatus: document.getElementById('fNaverReviewStatus').value,
     tagsType1: document.getElementById('fTagsType1').value.split(',').map(s=>s.trim()).filter(Boolean),
