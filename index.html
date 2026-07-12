@@ -199,6 +199,7 @@
   .modalCloseX:hover{color:var(--ink);}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:6px;font-weight:600;}
+  .fieldLabelRow{display:flex;align-items:center;justify-content:space-between;}
   .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
     padding:10px 11px;font-size:13.5px;background:#fbfaf8;}
   .field textarea{resize:vertical;min-height:56px;}
@@ -395,12 +396,17 @@
       </div>
     </div>
     <input type="hidden" id="fId">
-    <div class="field"><label>업체명</label><input id="fName" placeholder="예: OO카페"></div>
-    <div class="fieldRow">
-      <label class="checkRow" style="margin:2px 0"><input type="checkbox" id="fVlog"> 클립영상 제작</label>
-      <label class="checkRow" style="margin:2px 0"><input type="checkbox" id="fReservationDone" onchange="refreshStatusPreview()"> 예약 완료</label>
+    <div class="field">
+      <label class="fieldLabelRow">
+        <span>업체명</span>
+        <label class="checkRow" style="margin:0;font-weight:700;font-size:12px"><input type="checkbox" id="fReservationDone" onchange="refreshStatusPreview()"> 예약 완료</label>
+      </label>
+      <input id="fName" placeholder="예: OO카페">
     </div>
-    <label class="checkRow" style="margin:2px 0 14px"><input type="checkbox" id="fNaverReviewRequired" onchange="toggleNaverReviewField(); refreshStatusPreview()"> 네이버 리뷰 업로드 필요</label>
+    <div class="fieldRow">
+      <label class="checkRow" style="margin:2px 0 14px"><input type="checkbox" id="fVlog"> 클립영상 제작</label>
+      <label class="checkRow" style="margin:2px 0 14px"><input type="checkbox" id="fNaverReviewRequired" onchange="toggleNaverReviewField(); refreshStatusPreview()"> 네이버 리뷰 업로드 필요</label>
+    </div>
     <div class="field" id="naverReviewField" style="display:none">
       <label>네이버 리뷰 상태</label>
       <select id="fNaverReviewStatus" onchange="refreshStatusPreview()"><option value="작성전">작성전</option><option value="작성중">작성중</option>
@@ -454,7 +460,7 @@
     <div class="modalActions">
       <button class="cancelBtn" onclick="closeModal()">취소</button>
       <button class="saveBtn" onclick="saveCampaignFromForm()">저장</button>
-      <button class="deleteBtnBig" id="deleteBtn" style="visibility:hidden" onclick="deleteCampaign()">🗑 삭제</button>
+      <button class="deleteBtnBig" id="deleteBtn" style="display:none" onclick="deleteCampaign()">🗑 삭제</button>
     </div>
   </div>
 </div>
@@ -989,7 +995,7 @@ function quickUpdate(id, field, value){
 function openModal(id){
   const isEdit = !!id;
   document.getElementById('modalTitle').textContent = isEdit ? '캠페인 수정' : '새 캠페인 추가';
-  document.getElementById('deleteBtn').style.visibility = isEdit ? 'visible' : 'hidden';
+  document.getElementById('deleteBtn').style.display = isEdit ? 'inline-block' : 'none';
   const c = isEdit ? campaigns.find(x=>x.id===id) : {};
   document.getElementById('fId').value = c.id || '';
   document.getElementById('fName').value = c.name || '';
