@@ -950,14 +950,14 @@ function renderList(keepPage){
           ${(c.tagsType1||[]).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
           ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
         </div>
+        <div class="cSubRow" onclick="event.stopPropagation()">
+          ${qePill('예약방법', c.id, 'reserveMethod', RESERVE_OPTS, c.reserveMethod)}
+          ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
+        </div>
         <div class="qeBox" onclick="event.stopPropagation()" title="이 3가지(+예약완료)로 전체 상태가 결정돼요">
           ${qePill('리뷰상태', c.id, 'reviewStatus', REVIEW_OPTS, c.reviewStatus)}
           ${qePill('정산상태', c.id, 'settleStatus', SETTLE_OPTS, c.settleStatus)}
           ${c.naverReviewRequired ? qePill('네이버 리뷰상태', c.id, 'naverReviewStatus', REVIEW_OPTS, c.naverReviewStatus) : ''}
-        </div>
-        <div class="cSubRow" onclick="event.stopPropagation()">
-          ${qePill('예약방법', c.id, 'reserveMethod', RESERVE_OPTS, c.reserveMethod)}
-          ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
         </div>
         ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
       </div>
