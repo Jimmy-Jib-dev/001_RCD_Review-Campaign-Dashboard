@@ -86,10 +86,10 @@
   .panel h3 .legend{font-size:12px;color:var(--sub);font-weight:500;display:flex;align-items:center;gap:5px;}
   .legend .sw{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;}
   .timelineWrap{position:relative;display:flex;align-items:center;gap:6px;}
-  .timelineTrack{display:flex;overflow-x:auto;gap:0;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:var(--accent) #eee;}
+  .timelineTrack{display:flex;overflow-x:auto;gap:0;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:#c9c6bd #f1efea;}
   .timelineTrack::-webkit-scrollbar{height:6px;}
-  .timelineTrack::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px;}
-  .timelineTrack::-webkit-scrollbar-track{background:#eee;border-radius:3px;}
+  .timelineTrack::-webkit-scrollbar-thumb{background:#c9c6bd;border-radius:3px;}
+  .timelineTrack::-webkit-scrollbar-track{background:#f1efea;border-radius:3px;}
   .tlNavBtn{flex:0 0 auto;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:#fff;
     color:var(--sub);font-size:15px;cursor:pointer;box-shadow:var(--shadow);}
   .tlNavBtn:hover{background:#f4f2ed;color:var(--ink);}
@@ -221,7 +221,7 @@
   .modalHeadRow{padding-right:30px;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:6px;font-weight:600;}
-  .fieldLabelRow{display:flex;align-items:center;gap:28px;flex-wrap:nowrap;}
+  .fieldLabelRow{display:flex;align-items:center;gap:56px;flex-wrap:nowrap;}
   .resvToggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;
     padding:5px 12px;font-size:12px;font-weight:700;color:var(--ink);background:#fbfaf8;white-space:nowrap;flex-shrink:0;}
   .resvToggle input{margin:0;cursor:pointer;}
@@ -231,6 +231,10 @@
     background:var(--good-soft);color:var(--good);border:1px solid var(--good);
     border-radius:9px;padding:0 16px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;}
   .smsBtn:hover{background:var(--good);color:#fff;}
+  .mapBtn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+    background:var(--navy-soft);color:var(--navy);border:1px solid var(--navy);
+    border-radius:9px;padding:0 16px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;}
+  .mapBtn:hover{background:var(--navy);color:#fff;}
   .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
     padding:10px 11px;font-size:13.5px;background:#fbfaf8;}
   .field textarea{resize:vertical;min-height:56px;}
@@ -454,7 +458,13 @@
       </label>
       <input id="fName" placeholder="예: OO카페">
     </div>
-    <div class="field"><label>주소</label><input id="fAddress" placeholder="예: 서울특별시 강남구 테헤란로 123"></div>
+    <div class="field">
+      <label>주소</label>
+      <div class="contactRow">
+        <input id="fAddress" placeholder="예: 서울특별시 강남구 테헤란로 123">
+        <button type="button" class="mapBtn" onclick="openNaverMapSearch()">네이버 지도에서 찾기</button>
+      </div>
+    </div>
     <div class="field">
       <label>연락처</label>
       <div class="contactRow">
@@ -599,6 +609,11 @@ function sendSms(){
   const digits = document.getElementById('fContact').value.replace(/[^\d]/g,'');
   if(!digits) return;
   window.location.href = 'sms:' + digits;
+}
+function openNaverMapSearch(){
+  const name = document.getElementById('fName').value.trim();
+  if(!name){ toast('업체명을 먼저 입력해 주세요'); return; }
+  window.open('https://map.naver.com/p/search/' + encodeURIComponent(name), '_blank');
 }
 function fmtDateKR(d){
   const dt = new Date(d+'T00:00:00');
