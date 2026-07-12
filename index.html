@@ -161,8 +161,9 @@
   .cTags{display:flex;gap:6px;flex-wrap:wrap;}
   .tag{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--navy-soft);color:var(--navy);font-weight:600;}
   .tag.alt{background:#f1f1ee;color:var(--sub);font-weight:500;}
-  .cReward{flex:0 0 auto;text-align:right;font-weight:700;font-size:14.5px;white-space:nowrap;}
-  .cReward .st{display:block;font-size:11px;font-weight:600;color:var(--sub);margin-top:3px;}
+  .cReward{flex:0 0 auto;text-align:right;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+  .cReward .cRewardAmt{font-weight:700;font-size:14.5px;}
+  .cReward .st{font-size:11px;font-weight:600;color:var(--sub);}
   .cSubRow{display:flex;gap:8px;flex-wrap:wrap;}
 
   /* ---------- Modal ---------- */
@@ -196,6 +197,7 @@
   .statusPill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;}
   .statusPill.done{background:var(--good-soft);color:var(--good);}
   .statusPill.progress{background:var(--warn-soft);color:var(--warn);}
+  .statusPill.big{font-size:13px;padding:6px 16px;margin-left:0;}
   .statusReasons{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
   .reasonChip{font-size:10.5px;background:var(--warn-soft);color:var(--warn);padding:3px 8px;border-radius:6px;font-weight:600;}
   .cReason{font-size:10.5px;color:var(--warn);margin-top:5px;font-weight:600;}
@@ -812,10 +814,9 @@ function renderList(){
       <div class="dday ${cls}">${ddayLabel}<small>${c.reviewStatus||''}</small></div>
       <div class="cBody">
         <div class="cHeadRow">
-          <span class="name">${escapeHtml(c.name||'(이름 없음)')}</span>
-          <span class="statusPill ${statusCls}">${c.status}</span>
-          <span class="tag">${escapeHtml(c.site||'-')}</span>
-          <span class="tag alt">${escapeHtml(c.category||'-')}</span>
+          <span class="name">업체명: ${escapeHtml(c.name||'(이름 없음)')}</span>
+          <span class="tag">캠페인 사이트: ${escapeHtml(c.site||'-')}</span>
+          <span class="tag alt">카테고리: ${escapeHtml(c.category||'-')}</span>
           ${(c.tagsType1||[]).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
           ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
         </div>
@@ -830,7 +831,11 @@ function renderList(){
         </div>
         ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
       </div>
-      <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
+      <div class="cReward">
+        <span class="statusPill big ${statusCls}">${c.status}</span>
+        <div class="cRewardAmt">${fmtWon(c.reward)}</div>
+        <span class="st">${c.settleStatus||''}</span>
+      </div>
     </div>`;
   }).join('');
 }
