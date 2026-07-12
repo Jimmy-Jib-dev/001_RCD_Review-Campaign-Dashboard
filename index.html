@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" as="style" crossorigin
   href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --bg:#f5f4f0;
@@ -83,9 +84,14 @@
   .tDay .dow{font-size:11px;color:var(--sub);}
   .tDay .dnum{font-size:13px;margin-top:2px;}
   .tDay.today .dnum{font-weight:800;color:var(--accent);}
+  .tDay.sun .dow,.tDay.sun .dnum{color:var(--danger);}
+  .tHoliday{font-size:8px;color:var(--danger);font-weight:700;margin-top:2px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;}
   .tDay .marker{margin-top:8px;display:flex;flex-direction:column;gap:3px;align-items:center;}
   .tDay .pill{font-size:9.5px;background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:2px 5px;
     max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tDay .pill.done{background:var(--good-soft);color:var(--good);}
+  .tDay .pill.progress{background:var(--warn-soft);color:var(--warn);}
 
   /* ---------- Split: donut + calendar ---------- */
   .splitGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
@@ -144,7 +150,11 @@
   .filterRow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
   .filterRow select,.filterRow input[type=text]{border:1px solid var(--line);background:var(--card);
     border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--ink);}
-  .filterRow input[type=text]{flex:1;min-width:180px;}
+  .filterRow input[type=text]{flex:0 1 240px;min-width:140px;}
+  .listPager{display:flex;justify-content:center;gap:6px;margin-top:16px;}
+  .listPager button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--card);
+    color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;}
+  .listPager button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
 
   /* ---------- List ---------- */
   .listEmpty{text-align:center;color:var(--sub);padding:50px 20px;font-size:14px;}
@@ -353,9 +363,11 @@
       <option value="완료">완료</option>
     </select>
     <input type="text" id="fSearch" placeholder="업체명, 태그 검색" oninput="renderList()">
+    <button class="ghostBtn" onclick="exportExcel()">📊 Excel로 출력</button>
   </div>
 
   <div id="listWrap"></div>
+  <div id="listPager" class="listPager"></div>
 </div>
 
 <!-- ================= MODAL ================= -->
@@ -449,6 +461,7 @@
 const WORKER_BASE = "https://rcd-dashboard-worker.jimmyjib-dev.workers.dev";
 
 let campaigns = [];
+let lastFilteredList = [];
 let authToken = null;
 let userInfo = null;
 let calCursor = new Date();
@@ -661,15 +674,22 @@ function renderStatusDonut(){
 function renderTimeline(){
   const el = document.getElementById('timeline'); el.innerHTML='';
   const start = new Date(); start.setHours(0,0,0,0);
+  const years = new Set();
+  for(let i=0;i<14;i++){ const d=new Date(start); d.setDate(d.getDate()+i); years.add(d.getFullYear()); }
+  years.forEach(y=>{ if(!holidayCache[y]) ensureHolidays(y); });
+
   for(let i=0;i<14;i++){
     const d = new Date(start); d.setDate(d.getDate()+i);
     const ds = d.toISOString().slice(0,10);
     const dow = ['일','월','화','수','목','금','토'][d.getDay()];
-    const items = campaigns.filter(c=>c.deadline===ds && c.status==='진행중');
+    const isSun = d.getDay()===0;
+    const holidayName = (holidayCache[d.getFullYear()]||{})[ds];
+    const items = campaigns.filter(c=>c.deadline===ds);
     const div = document.createElement('div');
-    div.className = 'tDay' + (i===0?' today':'');
+    div.className = 'tDay' + (i===0?' today':'') + (isSun||holidayName ? ' sun' : '');
     div.innerHTML = `<div class="dow">${d.getMonth()+1}/${d.getDate()}</div><div class="dnum">${dow}</div>
-      <div class="marker">${items.map(it=>`<span class="pill" title="${it.name}">${it.name}</span>`).join('')}</div>`;
+      ${holidayName ? `<div class="tHoliday" title="${escapeHtml(holidayName)}">${escapeHtml(holidayName)}</div>` : ''}
+      <div class="marker">${items.map(it=>`<span class="pill ${it.status==='완료'?'done':'progress'}" title="${it.name}">${it.name}</span>`).join('')}</div>`;
     el.appendChild(div);
   }
 }
@@ -718,6 +738,7 @@ async function ensureHolidays(year){
     holidayCache[year] = {};
   }
   renderCalendar();
+  renderTimeline();
 }
 
 function renderCalendar(){
@@ -818,7 +839,11 @@ function ddayClass(days, reviewStatus){
   return 'ok';
 }
 
-function renderList(){
+let currentListPage = 1;
+const LIST_PAGE_SIZE = 5;
+
+function renderList(keepPage){
+  if(!keepPage) currentListPage = 1;
   const site = document.getElementById('fSite').value;
   const category = document.getElementById('fCategory').value;
   const status = document.getElementById('fStatus').value;
@@ -835,16 +860,38 @@ function renderList(){
     return true;
   });
   list.sort((a,b)=>(a.deadline||'9999').localeCompare(b.deadline||'9999'));
+  lastFilteredList = list;
 
   const wrap = document.getElementById('listWrap');
-  if(list.length===0){ wrap.innerHTML = '<div class="listEmpty">조건에 맞는 캠페인이 없어요. + 캠페인 추가로 새로 등록해 보세요.</div>'; return; }
+  const pager = document.getElementById('listPager');
+  if(list.length===0){
+    wrap.innerHTML = '<div class="listEmpty">조건에 맞는 캠페인이 없어요. + 캠페인 추가로 새로 등록해 보세요.</div>';
+    pager.innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(list.length / LIST_PAGE_SIZE);
+  if(currentListPage > totalPages) currentListPage = totalPages;
+  const pageList = list.length > LIST_PAGE_SIZE
+    ? list.slice((currentListPage-1)*LIST_PAGE_SIZE, currentListPage*LIST_PAGE_SIZE)
+    : list;
+
+  if(list.length > LIST_PAGE_SIZE){
+    let btns = '';
+    for(let p=1; p<=totalPages; p++){
+      btns += `<button class="${p===currentListPage?'active':''}" onclick="goToPage(${p})">${p}</button>`;
+    }
+    pager.innerHTML = btns;
+  } else {
+    pager.innerHTML = '';
+  }
 
   const RESERVE_OPTS = ['네이버예약','전화예약','문자예약','워크인'];
   const REVIEW_OPTS = ['작성전','작성중','작성완료','등록완료'];
   const SETTLE_OPTS = ['해당없음','대기','완료'];
   const opt = (opts, cur) => opts.map(o=>`<option value="${o}" ${o===cur?'selected':''}>${o}</option>`).join('');
 
-  wrap.innerHTML = list.map(c=>{
+  wrap.innerHTML = pageList.map(c=>{
     const days = c.deadline ? diffDays(c.deadline) : null;
     const cls = days===null ? 'done' : ddayClass(days, c.reviewStatus);
     const ddayLabel = days===null ? '-' : (days>=0 ? `D-${days}` : `D+${-days}`);
@@ -877,6 +924,39 @@ function renderList(){
       </div>
     </div>`;
   }).join('');
+}
+function goToPage(p){ currentListPage = p; renderList(true); }
+
+function exportExcel(){
+  const rows = (lastFilteredList||[]).map(c=>({
+    '업체명': c.name||'',
+    '캠페인 사이트': c.site||'',
+    '유형': c.type||'',
+    '카테고리': c.category||'',
+    '예약방법': c.reserveMethod||'',
+    '리뷰 등록 마감일': c.deadline||'',
+    '리뷰상태': c.reviewStatus||'',
+    '정산상태': c.settleStatus||'',
+    '보상금액': Number(c.reward)||0,
+    '전체상태': c.status||'',
+    '예약완료': c.reservationDone ? 'Y' : 'N',
+    '클립영상 제작': c.vlog ? 'Y' : 'N',
+    '네이버 리뷰 필요': c.naverReviewRequired ? 'Y' : 'N',
+    '네이버 리뷰상태': c.naverReviewRequired ? (c.naverReviewStatus||'') : '',
+    'Type.1 태그': (c.tagsType1||[]).join(', '),
+    'Type.2 태그': (c.tagsType2||[]).join(', '),
+    '제공내역': c.details||'',
+    '가이드라인': c.guideline||'',
+    '영수증 링크': c.receipt ? c.receipt.url : ''
+  }));
+  if(rows.length===0){ toast('내보낼 데이터가 없어요'); return; }
+  if(typeof XLSX === 'undefined'){ toast('Excel 라이브러리를 불러오지 못했어요'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = Object.keys(rows[0]).map(k=>({wch: Math.max(10, k.length+2)}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '체험단');
+  XLSX.writeFile(wb, `체험단_대시보드_${todayStr()}.xlsx`);
+  toast('Excel 파일을 내려받았어요');
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
