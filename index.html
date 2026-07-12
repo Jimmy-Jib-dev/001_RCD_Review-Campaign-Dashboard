@@ -221,14 +221,15 @@
   .modalHeadRow{padding-right:30px;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:6px;font-weight:600;}
-  .fieldLabelRow{display:flex;align-items:center;gap:12px;flex-wrap:nowrap;}
+  .fieldLabelRow{display:flex;align-items:center;gap:28px;flex-wrap:nowrap;}
   .resvToggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;
     padding:5px 12px;font-size:12px;font-weight:700;color:var(--ink);background:#fbfaf8;white-space:nowrap;flex-shrink:0;}
   .resvToggle input{margin:0;cursor:pointer;}
   .contactRow{display:flex;gap:8px;align-items:stretch;}
   .contactRow input{flex:1;min-width:0;}
-  .smsBtn{flex:0 0 auto;background:var(--good-soft);color:var(--good);border:1px solid var(--good);
-    border-radius:9px;padding:0 14px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;}
+  .smsBtn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+    background:var(--good-soft);color:var(--good);border:1px solid var(--good);
+    border-radius:9px;padding:0 16px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;}
   .smsBtn:hover{background:var(--good);color:#fff;}
   .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
     padding:10px 11px;font-size:13.5px;background:#fbfaf8;}
@@ -290,7 +291,7 @@
     .calCell .tag{font-size:6.8px;padding:1px 2px;}
     .holidayLabel{font-size:6px;}
     .siteRow{flex-wrap:wrap;row-gap:4px;}
-    .siteRow .siteName{flex:1 1 auto;}
+    .siteRow .siteName{flex:1 1 auto;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
     .siteRow .barTrack{order:3;flex:1 1 100%;}
     .siteRow .siteStats{flex:0 0 auto;font-size:11px;white-space:normal;text-align:right;}
     .timelineTrack{gap:0;}
@@ -458,7 +459,7 @@
       <label>연락처</label>
       <div class="contactRow">
         <input id="fContact" placeholder="010-0000-0000" inputmode="numeric" oninput="formatPhoneInput(this)">
-        <button type="button" class="smsBtn" id="smsBtn" style="display:none" onclick="sendSms()">💬 문자 보내기</button>
+        <button type="button" class="smsBtn" id="smsBtn" style="display:none" onclick="sendSms()">문자 보내기</button>
       </div>
     </div>
     <div class="fieldRow">
