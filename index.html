@@ -203,6 +203,7 @@
   .cReward{flex:0 0 auto;text-align:right;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
   .cReward .cRewardAmt{font-weight:700;font-size:14.5px;}
   .cReward .st{font-size:11px;font-weight:600;color:var(--sub);}
+  .cTopRow{display:flex;align-items:center;gap:10px;justify-content:flex-end;}
   .cSubRow{display:flex;gap:8px;flex-wrap:wrap;}
 
   /* ---------- Modal ---------- */
@@ -262,7 +263,7 @@
   .statusPill.big{font-size:14.5px;padding:8px 20px;margin-left:0;}
   .statusReasons{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
   .reasonChip{font-size:10.5px;background:var(--warn-soft);color:var(--warn);padding:3px 8px;border-radius:6px;font-weight:600;}
-  .cReason{font-size:10.5px;color:var(--warn);margin-top:5px;font-weight:600;text-align:right;max-width:240px;}
+  .cReason{font-size:10.5px;color:var(--warn);margin-top:5px;font-weight:600;text-align:right;max-width:280px;white-space:normal;}
   .receiptChip{display:inline-flex;align-items:center;gap:8px;background:#f1efea;border-radius:8px;
     padding:6px 10px;margin-top:8px;font-size:12.5px;}
   .receiptChip a{color:var(--navy);font-weight:600;text-decoration:none;}
@@ -304,6 +305,7 @@
     .cCard{display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:6px 10px;padding:14px;}
     .cBody{display:contents;}
     .cReward{display:contents;}
+    .cTopRow{display:contents;}
     .dday{grid-column:1;grid-row:1;align-self:center;}
     .cTitle{grid-column:2;grid-row:1;align-self:center;font-size:14.5px;}
     .statusPill.big{grid-column:3;grid-row:1;justify-self:end;align-self:center;}
@@ -1068,8 +1070,10 @@ function renderList(keepPage){
         </div>
       </div>
       <div class="cReward">
-        <span class="statusPill big ${statusCls}">${c.status}</span>
-        <div class="cRewardAmt">${fmtWon(c.reward)}</div>
+        <div class="cTopRow">
+          <div class="cRewardAmt">${fmtWon(c.reward)}</div>
+          <span class="statusPill big ${statusCls}">${c.status}</span>
+        </div>
         <div class="qeBox" onclick="event.stopPropagation()" title="이 3가지(+예약완료)로 전체 상태가 결정돼요">
           ${qePill('리뷰상태', c.id, 'reviewStatus', REVIEW_OPTS, c.reviewStatus)}
           ${qePill('정산상태', c.id, 'settleStatus', SETTLE_OPTS, c.settleStatus)}
