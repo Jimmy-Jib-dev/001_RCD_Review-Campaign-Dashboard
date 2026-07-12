@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>체험단 대시보드</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KPHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNmZmZmZmYiLz4KPHBvbHlnb24gcG9pbnRzPSI1MCw2IDYxLDM2IDk0LDM2IDY3LDU1IDc4LDg4IDUwLDY4IDIyLDg4IDMzLDU1IDYsMzYgMzksMzYiIGZpbGw9IiNGRkQ0MDAiIHN0cm9rZT0iI0U4QjgwMCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" as="style" crossorigin
   href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
@@ -155,6 +156,8 @@
   .listPager button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--card);
     color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;}
   .listPager button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .appFooter{text-align:center;color:var(--sub);font-size:11px;line-height:1.7;margin-top:40px;padding-top:18px;
+    border-top:1px solid var(--line);}
 
   /* ---------- List ---------- */
   .listEmpty{text-align:center;color:var(--sub);padding:50px 20px;font-size:14px;}
@@ -374,6 +377,11 @@
 
   <div id="listWrap"></div>
   <div id="listPager" class="listPager"></div>
+
+  <div class="appFooter">
+    © 2026 jimmyjib<br>
+    This system is internally developed by jimmyjib corp., so unauthorized access is strictly prohibited.
+  </div>
 </div>
 
 <!-- ================= MODAL ================= -->
@@ -689,7 +697,7 @@ function renderTimeline(){
     const d = new Date(start); d.setDate(d.getDate()+i);
     const ds = d.toISOString().slice(0,10);
     const dow = ['일','월','화','수','목','금','토'][d.getDay()];
-    const isSun = d.getDay()===0;
+    const isSun = d.getDay()===0 || d.getDay()===6;
     const holidayName = (holidayCache[d.getFullYear()]||{})[ds];
     const items = campaigns.filter(c=>c.deadline===ds);
     const div = document.createElement('div');
@@ -753,7 +761,7 @@ function renderCalendar(){
   document.getElementById('calTitle').textContent = `${y}년 ${m+1}월`;
   const grid = document.getElementById('calGrid'); grid.innerHTML='';
   ['일','월','화','수','목','금','토'].forEach((d,i)=>{
-    const dv = document.createElement('div'); dv.className='dow'+(i===0?' sun':''); dv.textContent=d; grid.appendChild(dv);
+    const dv = document.createElement('div'); dv.className='dow'+((i===0||i===6)?' sun':''); dv.textContent=d; grid.appendChild(dv);
   });
   if(!holidayCache[y]) ensureHolidays(y);
   const holidays = holidayCache[y] || {};
@@ -764,7 +772,7 @@ function renderCalendar(){
   for(let d=1; d<=daysInMonth; d++){
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const items = campaigns.filter(c=>c.deadline===ds);
-    const isSun = new Date(y,m,d).getDay()===0;
+    const isSun = new Date(y,m,d).getDay()===0 || new Date(y,m,d).getDay()===6;
     const holidayName = holidays[ds];
     const cell = document.createElement('div');
     cell.className = 'calCell' + (ds===todayStr()?' today':'') + (items.length ? ' hasItems' : '') + (isSun||holidayName ? ' sun' : '');
@@ -929,7 +937,6 @@ function renderList(keepPage){
       <div class="cReward">
         <span class="statusPill big ${statusCls}">${c.status}</span>
         <div class="cRewardAmt">${fmtWon(c.reward)}</div>
-        <span class="st">${c.settleStatus||''}</span>
       </div>
     </div>`;
   }).join('');
