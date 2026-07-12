@@ -189,7 +189,7 @@
   .deleteBtnBig:hover{background:var(--danger);color:#fff;}
   .qeRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
   .qePill{display:inline-flex;align-items:center;gap:2px;background:#f1efea;border-radius:8px;padding:5px 8px;
-    font-size:11px;color:var(--sub);font-weight:600;white-space:nowrap;}
+    font-size:11px;color:var(--sub);font-weight:600;white-space:nowrap;cursor:pointer;}
   .qePill select{border:none;background:transparent;font-family:inherit;font-size:11px;color:var(--ink);
     padding:2px 2px 2px 0;cursor:pointer;font-weight:700;}
   .qePill.receiptPill{cursor:pointer;color:var(--navy);background:var(--navy-soft);font-weight:700;}
@@ -832,12 +832,12 @@ function renderList(){
           ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
         </div>
         <div class="qeBox" onclick="event.stopPropagation()" title="이 3가지(+예약완료)로 전체 상태가 결정돼요">
-          <span class="qePill">리뷰상태: <select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></span>
-          <span class="qePill">정산상태: <select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></span>
-          ${c.naverReviewRequired ? `<span class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></span>` : ''}
+          <label class="qePill">리뷰상태: <select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></label>
+          <label class="qePill">정산상태: <select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></label>
+          ${c.naverReviewRequired ? `<label class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></label>` : ''}
         </div>
         <div class="cSubRow" onclick="event.stopPropagation()">
-          <span class="qePill">예약방법: <select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></span>
+          <label class="qePill">예약방법: <select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></label>
           ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
         </div>
         ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
