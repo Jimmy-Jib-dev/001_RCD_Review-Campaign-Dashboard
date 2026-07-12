@@ -77,6 +77,8 @@
   /* ---------- Timeline ---------- */
   .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;margin-bottom:16px;}
   .panel h3{margin:0 0 14px;font-size:14.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;}
+  .panelHeadRight{display:flex;align-items:center;gap:10px;}
+  .sitePerfExportBtn{font-size:11.5px;padding:6px 10px;}
   .panel h3 .legend{font-size:12px;color:var(--sub);font-weight:500;display:flex;align-items:center;gap:5px;}
   .legend .sw{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;}
   .timelineTrack{display:flex;overflow-x:auto;gap:0;padding-bottom:4px;}
@@ -357,7 +359,9 @@
   </div>
 
   <div class="panel" id="sitePerfPanel">
-    <h3>사이트별 실적 <span class="legend">누적 리워드 기준</span></h3>
+    <h3>사이트별 실적 <span class="panelHeadRight"><span class="legend">누적 리워드 기준</span>
+      <button class="ghostBtn sitePerfExportBtn" onclick="exportSitePerformanceExcel()">📊 Excel로 출력</button></span>
+    </h3>
     <div id="sitePerfList"></div>
   </div>
 
@@ -817,8 +821,7 @@ function openDayModal(ds){
 }
 function closeDayModal(){ document.getElementById('dayModalBg').classList.remove('show'); }
 
-function renderSitePerformance(){
-  const el = document.getElementById('sitePerfList');
+function computeSitePerformance(){
   const bySite = {};
   campaigns.forEach(c=>{
     const key = c.site && c.site.trim() ? c.site.trim() : '(미지정)';
@@ -827,7 +830,12 @@ function renderSitePerformance(){
     bySite[key].reward += Number(c.reward)||0;
     if(c.reviewStatus==='등록완료') bySite[key].done += 1;
   });
-  const rows = Object.entries(bySite).sort((a,b)=>b[1].reward-a[1].reward);
+  return Object.entries(bySite).sort((a,b)=>b[1].reward-a[1].reward);
+}
+
+function renderSitePerformance(){
+  const el = document.getElementById('sitePerfList');
+  const rows = computeSitePerformance();
   if(rows.length===0){
     el.innerHTML = '<div class="listEmpty" style="padding:24px 0">캠페인을 등록하면 사이트별 실적이 여기 표시돼요.</div>';
     return;
@@ -978,6 +986,26 @@ function exportExcel(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '체험단');
   XLSX.writeFile(wb, `체험단_대시보드_${todayStr()}.xlsx`);
+  toast('Excel 파일을 내려받았어요');
+}
+
+function exportSitePerformanceExcel(){
+  const rows = computeSitePerformance();
+  if(rows.length===0){ toast('내보낼 데이터가 없어요'); return; }
+  if(typeof XLSX === 'undefined'){ toast('Excel 라이브러리를 불러오지 못했어요'); return; }
+  const data = rows.map(([site,d],i)=>({
+    '순위': i+1,
+    '캠페인 사이트': site,
+    '누적 리워드': d.reward.toLocaleString('ko-KR'),
+    '캠페인 건수': d.count,
+    '완료 건수': d.done,
+    '진행중 건수': d.count - d.done
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = Object.keys(data[0]).map(k=>({wch: Math.max(10, k.length+2)}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '사이트별 실적');
+  XLSX.writeFile(wb, `사이트별_실적_${todayStr()}.xlsx`);
   toast('Excel 파일을 내려받았어요');
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
