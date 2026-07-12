@@ -207,10 +207,12 @@
     padding:9px 16px;font-weight:700;font-size:13.5px;}
   .deleteBtnBig:hover{background:var(--danger);color:#fff;}
   .qeRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-  .qePill{display:inline-flex;align-items:center;gap:2px;background:#f1efea;border-radius:8px;padding:5px 8px;
+  .qePill{position:relative;display:inline-flex;align-items:center;gap:2px;background:#f1efea;border-radius:8px;padding:5px 8px;
     font-size:11px;color:var(--sub);font-weight:600;white-space:nowrap;cursor:pointer;}
-  .qePill select{border:none;background:transparent;font-family:inherit;font-size:11px;color:var(--ink);
-    padding:2px 2px 2px 0;cursor:pointer;font-weight:700;}
+  .qePill b{color:var(--ink);font-weight:700;}
+  .qeCaret{font-size:8px;color:var(--sub);}
+  .qePill .qeOverlay{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;
+    background:transparent;cursor:pointer;-webkit-appearance:none;appearance:none;}
   .qePill.receiptPill{cursor:pointer;color:var(--navy);background:var(--navy-soft);font-weight:700;}
   .qePill.receiptPill:hover{background:#d4d9ea;}
   .statusPill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;}
@@ -895,6 +897,8 @@ function renderList(keepPage){
   const REVIEW_OPTS = ['작성전','작성중','작성완료','등록완료'];
   const SETTLE_OPTS = ['해당없음','대기','완료'];
   const opt = (opts, cur) => opts.map(o=>`<option value="${o}" ${o===cur?'selected':''}>${o}</option>`).join('');
+  const qePill = (label, id, field, opts, cur) => `<span class="qePill">${label}: <b>${escapeHtml(cur||'-')}</b> <span class="qeCaret">▾</span>
+    <select class="qeOverlay" onchange="quickUpdate('${id}','${field}',this.value)">${opt(opts,cur)}</select></span>`;
 
   wrap.innerHTML = pageList.map(c=>{
     const days = c.deadline ? diffDays(c.deadline) : null;
@@ -912,12 +916,12 @@ function renderList(keepPage){
           ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
         </div>
         <div class="qeBox" onclick="event.stopPropagation()" title="이 3가지(+예약완료)로 전체 상태가 결정돼요">
-          <label class="qePill">리뷰상태: <select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></label>
-          <label class="qePill">정산상태: <select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></label>
-          ${c.naverReviewRequired ? `<label class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></label>` : ''}
+          ${qePill('리뷰상태', c.id, 'reviewStatus', REVIEW_OPTS, c.reviewStatus)}
+          ${qePill('정산상태', c.id, 'settleStatus', SETTLE_OPTS, c.settleStatus)}
+          ${c.naverReviewRequired ? qePill('네이버 리뷰상태', c.id, 'naverReviewStatus', REVIEW_OPTS, c.naverReviewStatus) : ''}
         </div>
         <div class="cSubRow" onclick="event.stopPropagation()">
-          <label class="qePill">예약방법: <select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></label>
+          ${qePill('예약방법', c.id, 'reserveMethod', RESERVE_OPTS, c.reserveMethod)}
           ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
         </div>
         ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
@@ -942,7 +946,7 @@ function exportExcel(){
     '리뷰 등록 마감일': c.deadline||'',
     '리뷰상태': c.reviewStatus||'',
     '정산상태': c.settleStatus||'',
-    '보상금액': Number(c.reward)||0,
+    '보상금액': (Number(c.reward)||0).toLocaleString('ko-KR'),
     '전체상태': c.status||'',
     '예약완료': c.reservationDone ? 'Y' : 'N',
     '클립영상 제작': c.vlog ? 'Y' : 'N',
