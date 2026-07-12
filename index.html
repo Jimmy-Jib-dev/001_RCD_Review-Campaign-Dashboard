@@ -26,6 +26,10 @@
     --warn-soft:#f6e8d1;
     --danger:#c94b3f;
     --danger-soft:#f6dcd8;
+    --resv:#4a9d5b;          /* 예약확정 — 연한 초록 */
+    --resv-soft:#e2f3e4;
+    --reg:#3b74c4;           /* 등록완료 — 연한 파랑 */
+    --reg-soft:#e1ebfa;
     --radius:14px;
     --shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 24px -12px rgba(20,20,20,.10);
   }
@@ -94,7 +98,9 @@
   .tDay .pill{font-size:9.5px;background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:2px 5px;
     max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .tDay .pill.done{background:var(--good-soft);color:var(--good);}
-  .tDay .pill.progress{background:var(--warn-soft);color:var(--warn);}
+  .tDay .pill.reg{background:var(--reg-soft);color:var(--reg);}
+  .tDay .pill.resv{background:var(--resv-soft);color:var(--resv);}
+  .tDay .pill.pending{background:var(--danger-soft);color:var(--danger);}
 
   /* ---------- Split: donut + calendar ---------- */
   .splitGrid{display:grid;grid-template-columns:0.82fr 1.18fr;gap:16px;margin-bottom:16px;}
@@ -124,7 +130,9 @@
   .calCell .tag{font-size:9.5px;background:var(--accent-soft);color:var(--accent);border-radius:5px;
     padding:2px 4px;margin-top:2px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
   .calCell .tag.done{background:var(--good-soft);color:var(--good);}
-  .calCell .tag.progress{background:var(--warn-soft);color:var(--warn);}
+  .calCell .tag.reg{background:var(--reg-soft);color:var(--reg);}
+  .calCell .tag.resv{background:var(--resv-soft);color:var(--resv);}
+  .calCell .tag.pending{background:var(--danger-soft);color:var(--danger);}
   .calCell{cursor:pointer;transition:background .12s;}
   .calCell.pad{cursor:default;}
   .calCell:not(.pad):hover{background:#f4f2ed;}
@@ -205,7 +213,10 @@
   .modalCloseX:hover{color:var(--ink);}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:6px;font-weight:600;}
-  .fieldLabelRow{display:flex;align-items:center;gap:16px;}
+  .fieldLabelRow{display:flex;align-items:center;gap:12px;flex-wrap:nowrap;}
+  .resvToggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;
+    padding:5px 12px;font-size:12px;font-weight:700;color:var(--ink);background:#fbfaf8;white-space:nowrap;flex-shrink:0;}
+  .resvToggle input{margin:0;cursor:pointer;}
   .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
     padding:10px 11px;font-size:13.5px;background:#fbfaf8;}
   .field textarea{resize:vertical;min-height:56px;}
@@ -227,7 +238,9 @@
   .qePill.receiptPill:hover{background:#d4d9ea;}
   .statusPill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;}
   .statusPill.done{background:var(--good-soft);color:var(--good);}
-  .statusPill.progress{background:var(--warn-soft);color:var(--warn);}
+  .statusPill.reg{background:var(--reg-soft);color:var(--reg);}
+  .statusPill.resv{background:var(--resv-soft);color:var(--resv);}
+  .statusPill.pending{background:var(--danger-soft);color:var(--danger);}
   .statusPill.big{font-size:14.5px;padding:8px 20px;margin-left:0;}
   .statusReasons{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
   .reasonChip{font-size:10.5px;background:var(--warn-soft);color:var(--warn);padding:3px 8px;border-radius:6px;font-weight:600;}
@@ -377,7 +390,10 @@
       <option value="뷰티">뷰티</option><option value="리뷰">리뷰</option><option value="기타">기타</option>
     </select>
     <select id="fStatus" onchange="renderList()">
-      <option value="">전체 상태</option><option value="진행중">진행중</option>
+      <option value="">전체 상태</option>
+      <option value="진행전">진행전</option>
+      <option value="예약확정">예약확정</option>
+      <option value="등록완료">등록완료</option>
       <option value="완료">완료</option>
     </select>
     <input type="text" id="fSearch" placeholder="업체명, 태그 검색" oninput="renderList()">
@@ -407,7 +423,7 @@
     <div class="field">
       <label class="fieldLabelRow">
         <span>업체명</span>
-        <label class="checkRow" style="margin:0;font-weight:700;font-size:12px"><input type="checkbox" id="fReservationDone" onchange="refreshStatusPreview()"> 예약 완료</label>
+        <span class="resvToggle"><input type="checkbox" id="fReservationDone" onchange="refreshStatusPreview()"> 예약 완료</span>
       </label>
       <input id="fName" placeholder="예: OO카페">
     </div>
@@ -651,7 +667,7 @@ function renderAll(){
 }
 
 function renderStats(){
-  const ongoing = campaigns.filter(c=>c.status==='진행중');
+  const ongoing = campaigns.filter(c=>c.status!=='완료');
   const due7 = ongoing.filter(c=>c.deadline && diffDays(c.deadline)>=0 && diffDays(c.deadline)<=7);
   const pendingReview = ongoing.filter(c=>['작성전','작성중'].includes(c.reviewStatus));
   const pendingSettle = campaigns.filter(c=>c.settleStatus==='대기');
@@ -662,9 +678,18 @@ function renderStats(){
 }
 
 function computeStatus(c){
-  const baseOk = !!c.reservationDone && c.settleStatus === '완료' && c.reviewStatus === '등록완료';
   const naverOk = c.naverReviewRequired ? (c.naverReviewStatus === '등록완료') : true;
-  return (baseOk && naverOk) ? '완료' : '진행중';
+  if(c.settleStatus === '완료' && c.reviewStatus === '등록완료' && naverOk) return '완료';
+  if(c.reviewStatus === '등록완료') return '등록완료';
+  if(c.reservationDone) return '예약확정';
+  return '진행전';
+}
+
+function statusClass(status){
+  if(status==='완료') return 'done';
+  if(status==='등록완료') return 'reg';
+  if(status==='예약확정') return 'resv';
+  return 'pending'; // 진행전
 }
 
 function statusReasons(c){
@@ -677,8 +702,8 @@ function statusReasons(c){
 }
 
 function renderStatusDonut(){
-  const done = campaigns.filter(c=>c.status==='완료').length;
-  const progress = campaigns.length - done;
+  const counts = { '진행전':0, '예약확정':0, '등록완료':0, '완료':0 };
+  campaigns.forEach(c=>{ counts[c.status] = (counts[c.status]||0) + 1; });
   const canvas = document.getElementById('statusDonutCanvas');
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,90,90);
@@ -688,9 +713,11 @@ function renderStatusDonut(){
     list.innerHTML = '<div class="row" style="color:var(--sub)">아직 데이터가 없어요</div>';
     return;
   }
-  const parts = [['진행중', progress, '#c98a2e'], ['완료', done, '#3f8f5f']].filter(p=>p[1]>0);
+  const colorMap = { '진행전':'#c94b3f', '예약확정':'#4a9d5b', '등록완료':'#3b74c4', '완료':'#3f8f5f' };
+  const parts = Object.entries(counts).filter(([,v])=>v>0);
   let start = -Math.PI/2;
-  parts.forEach(([label,val,color])=>{
+  parts.forEach(([label,val])=>{
+    const color = colorMap[label];
     const frac = val/campaigns.length;
     const end = start + frac*Math.PI*2;
     ctx.beginPath(); ctx.arc(45,45,36,start,end);
@@ -721,7 +748,7 @@ function renderTimeline(){
     div.className = 'tDay' + (i===0?' today':'') + (isSun||holidayName ? ' sun' : '');
     div.innerHTML = `<div class="dow">${d.getMonth()+1}/${d.getDate()}</div><div class="dnum">${dow}</div>
       ${holidayName ? `<div class="tHoliday" title="${escapeHtml(holidayName)}">${escapeHtml(holidayName)}</div>` : ''}
-      <div class="marker">${items.map(it=>`<span class="pill ${it.status==='완료'?'done':'progress'}" title="${escapeHtml(it.name||'')}">${escapeHtml(truncateStr(it.name,9))}</span>`).join('')}</div>`;
+      <div class="marker">${items.map(it=>`<span class="pill ${statusClass(it.status)}" title="${escapeHtml(it.name||'')}">${escapeHtml(truncateStr(it.name,9))}</span>`).join('')}</div>`;
     el.appendChild(div);
   }
 }
@@ -795,7 +822,7 @@ function renderCalendar(){
     cell.className = 'calCell' + (ds===todayStr()?' today':'') + (items.length ? ' hasItems' : '') + (isSun||holidayName ? ' sun' : '');
     cell.innerHTML = `<div class="num">${d}</div>`
       + (holidayName ? `<span class="holidayLabel" title="${escapeHtml(holidayName)}">${escapeHtml(truncateStr(holidayName,8))}</span>` : '')
-      + items.slice(0,2).map(it=>`<span class="tag ${it.status==='완료'?'done':'progress'}" title="${escapeHtml(it.name||'')}">${escapeHtml(truncateStr(it.name,7))}</span>`).join('');
+      + items.slice(0,2).map(it=>`<span class="tag ${statusClass(it.status)}" title="${escapeHtml(it.name||'')}">${escapeHtml(truncateStr(it.name,7))}</span>`).join('');
     cell.onclick = () => openDayModal(ds);
     grid.appendChild(cell);
   }
@@ -936,13 +963,13 @@ function renderList(keepPage){
   const SETTLE_OPTS = ['해당없음','대기','완료'];
   const opt = (opts, cur) => opts.map(o=>`<option value="${o}" ${o===cur?'selected':''}>${o}</option>`).join('');
   const qePill = (label, id, field, opts, cur) => `<span class="qePill">${label}: <b>${escapeHtml(cur||'-')}</b> <span class="qeCaret">▾</span>
-    <select class="qeOverlay" onchange="quickUpdate('${id}','${field}',this.value)">${opt(opts,cur)}</select></span>`;
+    <select class="qeOverlay" onchange="quickUpdate('${id}','${field}',this.value); this.blur()" onclick="event.stopPropagation()">${opt(opts,cur)}</select></span>`;
 
   wrap.innerHTML = pageList.map(c=>{
     const days = c.deadline ? diffDays(c.deadline) : null;
     const cls = days===null ? 'done' : ddayClass(days, c.reviewStatus);
     const ddayLabel = days===null ? '-' : (days>=0 ? `D-${days}` : `D+${-days}`);
-    const statusCls = c.status==='완료' ? 'done' : 'progress';
+    const statusCls = statusClass(c.status);
     return `<div class="cCard" onclick="openModal('${c.id}')">
       <div class="dday ${cls}">${ddayLabel}<small>${c.reviewStatus||''}</small></div>
       <div class="cBody">
@@ -966,7 +993,7 @@ function renderList(keepPage){
           ${qePill('정산상태', c.id, 'settleStatus', SETTLE_OPTS, c.settleStatus)}
           ${c.naverReviewRequired ? qePill('네이버 리뷰상태', c.id, 'naverReviewStatus', REVIEW_OPTS, c.naverReviewStatus) : ''}
         </div>
-        ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
+        ${c.status!=='완료' ? `<div class="cReason">완료까지 남은 조건: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1116,7 +1143,7 @@ async function handleReceiptUpload(input){
 
 function renderStatusPreview(status, reasons){
   const el = document.getElementById('statusPreview');
-  const cls = status==='완료' ? 'done' : 'progress';
+  const cls = statusClass(status);
   let html = `<span class="statusPill ${cls}" style="font-size:12.5px;padding:6px 14px">${status}</span>`;
   if(status!=='완료' && reasons && reasons.length){
     html += `<div class="statusReasons">${reasons.map(r=>`<span class="reasonChip">${escapeHtml(r)}</span>`).join('')}</div>`;
