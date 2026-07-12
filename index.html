@@ -93,7 +93,7 @@
   .tlNavBtn{flex:0 0 auto;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:#fff;
     color:var(--sub);font-size:15px;cursor:pointer;box-shadow:var(--shadow);}
   .tlNavBtn:hover{background:#f4f2ed;color:var(--ink);}
-  .tDay{flex:0 0 78px;text-align:center;position:relative;padding:10px 4px 4px;border-right:1px solid var(--line);}
+  .tDay{flex:0 0 78px;width:78px;min-width:78px;overflow:hidden;text-align:center;position:relative;padding:10px 4px 4px;border-right:1px solid var(--line);}
   .tDay:last-child{border-right:none;}
   .tDay .dow{font-size:11px;color:var(--sub);}
   .tDay .dnum{font-size:13px;margin-top:2px;}
@@ -123,10 +123,10 @@
   .calHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .calNav{display:flex;gap:6px;}
   .calNav button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--sub);}
-  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .calGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;}
   .calGrid .dow{font-size:12.5px;color:var(--sub);text-align:center;padding-bottom:6px;}
   .calGrid .dow.sun{color:var(--danger);font-weight:700;}
-  .calCell{min-height:84px;border-radius:9px;font-size:13px;padding:6px;position:relative;color:var(--ink);
+  .calCell{min-height:84px;min-width:0;overflow:hidden;border-radius:9px;font-size:13px;padding:6px;position:relative;color:var(--ink);
     text-align:center;box-sizing:border-box;border:1px solid var(--line);}
   .calCell.pad{visibility:hidden;border:none;}
   .calCell.today{outline:1.5px solid var(--ink);}
@@ -164,7 +164,7 @@
   .siteRow .siteName{flex:0 0 120px;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .siteRow .barTrack{flex:1;height:10px;background:#f1efea;border-radius:6px;overflow:hidden;}
   .siteRow .barFill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--navy));}
-  .siteRow .siteStats{flex:0 0 190px;text-align:right;font-size:12px;color:var(--sub);}
+  .siteRow .siteStats{flex:0 0 340px;text-align:right;font-size:12px;color:var(--sub);white-space:normal;line-height:1.6;}
   .siteRow .siteStats b{color:var(--ink);font-size:13px;}
 
   /* ---------- Filters ---------- */
@@ -294,7 +294,7 @@
     .siteRow .barTrack{order:3;flex:1 1 100%;}
     .siteRow .siteStats{flex:0 0 auto;font-size:11px;white-space:normal;text-align:right;}
     .timelineTrack{gap:0;}
-    .tDay{flex:0 0 62px;}
+    .tDay{flex:0 0 62px;width:62px;min-width:62px;}
     .cCard{display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:6px 10px;padding:14px;}
     .cBody{display:contents;}
     .cReward{display:contents;}
@@ -687,7 +687,13 @@ async function loadData(){
     toast('데이터를 불러오지 못했어요');
     campaigns = [];
   }
+  let migrated = false;
+  campaigns.forEach(c=>{
+    const fresh = computeStatus(c);
+    if(c.status !== fresh){ c.status = fresh; migrated = true; }
+  });
   renderAll();
+  if(migrated) persist();
 }
 
 async function persist(){
@@ -922,10 +928,10 @@ function computeSitePerformance(){
   const bySite = {};
   campaigns.forEach(c=>{
     const key = c.site && c.site.trim() ? c.site.trim() : '(미지정)';
-    if(!bySite[key]) bySite[key] = { count:0, reward:0, done:0 };
+    if(!bySite[key]) bySite[key] = { count:0, reward:0, byStatus:{'진행전':0,'예약확정':0,'등록완료':0,'완료':0} };
     bySite[key].count += 1;
     bySite[key].reward += Number(c.reward)||0;
-    if(c.reviewStatus==='등록완료') bySite[key].done += 1;
+    bySite[key].byStatus[c.status] = (bySite[key].byStatus[c.status]||0) + 1;
   });
   return Object.entries(bySite).sort((a,b)=>b[1].reward-a[1].reward);
 }
@@ -940,11 +946,12 @@ function renderSitePerformance(){
   const max = Math.max(...rows.map(r=>r[1].reward), 1);
   el.innerHTML = rows.map(([site,d],i)=>{
     const pct = Math.max(4, Math.round(d.reward/max*100));
+    const b = d.byStatus;
     return `<div class="siteRow">
       <span class="siteRank">${i+1}</span>
       <span class="siteName" title="${escapeHtml(site)}">${escapeHtml(site)}</span>
       <span class="barTrack"><span class="barFill" style="width:${pct}%"></span></span>
-      <span class="siteStats"><b>${fmtWon(d.reward)}</b> · ${d.count}건 · 완료 ${d.done}</span>
+      <span class="siteStats"><b>${fmtWon(d.reward)}</b> · ${d.count}건 · 진행전 ${b['진행전']} · 예약확정 ${b['예약확정']} · 등록완료 ${b['등록완료']} · 완료 ${b['완료']}</span>
     </div>`;
   }).join('');
 }
@@ -1097,8 +1104,10 @@ function exportSitePerformanceExcel(){
     '캠페인 사이트': site,
     '누적 리워드': d.reward.toLocaleString('ko-KR'),
     '캠페인 건수': d.count,
-    '완료 건수': d.done,
-    '진행중 건수': d.count - d.done
+    '진행전': d.byStatus['진행전'],
+    '예약확정': d.byStatus['예약확정'],
+    '등록완료': d.byStatus['등록완료'],
+    '완료': d.byStatus['완료']
   }));
   const ws = XLSX.utils.json_to_sheet(data);
   ws['!cols'] = Object.keys(data[0]).map(k=>({wch: Math.max(10, k.length+2)}));
