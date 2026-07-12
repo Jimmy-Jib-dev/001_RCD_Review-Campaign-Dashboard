@@ -144,24 +144,24 @@
   /* ---------- List ---------- */
   .listEmpty{text-align:center;color:var(--sub);padding:50px 20px;font-size:14px;}
   .cCard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;
-    display:flex;flex-direction:column;gap:10px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
+    display:flex;align-items:center;gap:16px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
   .cCard:hover{transform:translateY(-1px);}
+  .cBody{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
   .cHeadRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .cHeadRow .name{font-weight:700;font-size:15.5px;}
-  .cMainRow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-  .dday{flex:0 0 56px;text-align:center;border-radius:10px;padding:8px 4px;font-weight:800;font-size:13px;}
+  .dday{flex:0 0 56px;text-align:center;border-radius:10px;padding:8px 4px;font-weight:800;font-size:13px;align-self:center;}
   .dday small{display:block;font-weight:500;font-size:9.5px;margin-top:1px;}
   .dday.ok{background:var(--good-soft);color:var(--good);}
   .dday.warn{background:var(--warn-soft);color:var(--warn);}
   .dday.danger{background:var(--danger-soft);color:var(--danger);}
   .dday.done{background:#eee;color:#999;}
-  .qeBox{display:inline-flex;background:#f1efea;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .qeBox{display:inline-flex;background:#f1efea;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
   .qeBox .qePill{border-radius:0;border-right:1px solid var(--line);margin:0;background:transparent;}
   .qeBox .qePill:last-child{border-right:none;}
   .cTags{display:flex;gap:6px;flex-wrap:wrap;}
   .tag{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--navy-soft);color:var(--navy);font-weight:600;}
   .tag.alt{background:#f1f1ee;color:var(--sub);font-weight:500;}
-  .cReward{margin-left:auto;text-align:right;font-weight:700;font-size:14.5px;white-space:nowrap;}
+  .cReward{flex:0 0 auto;text-align:right;font-weight:700;font-size:14.5px;white-space:nowrap;}
   .cReward .st{display:block;font-size:11px;font-weight:600;color:var(--sub);margin-top:3px;}
   .cSubRow{display:flex;gap:8px;flex-wrap:wrap;}
 
@@ -170,7 +170,10 @@
     align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
   .modalBg.show{display:flex;}
   .modal{background:#fff;border-radius:18px;max-width:560px;width:100%;padding:28px 28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
-  .modal h2{margin:0 0 20px;font-size:19px;}
+  .modal h2{margin:0;font-size:19px;}
+  .modalHeadRow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .modalHeadRow #statusPreview{text-align:right;}
+  .modalHeadRow #statusPreview .statusReasons{justify-content:flex-end;max-width:220px;}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:6px;font-weight:600;}
   .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
@@ -339,7 +342,10 @@
 <!-- ================= MODAL ================= -->
 <div class="modalBg" id="modalBg" onclick="if(event.target===this) closeModal()">
   <div class="modal">
-    <h2 id="modalTitle">새 캠페인 추가</h2>
+    <div class="modalHeadRow">
+      <h2 id="modalTitle">새 캠페인 추가</h2>
+      <div id="statusPreview"></div>
+    </div>
     <input type="hidden" id="fId">
     <div class="field"><label>업체명</label><input id="fName" placeholder="예: OO카페"></div>
     <div class="fieldRow">
@@ -395,10 +401,6 @@
       <button type="button" class="ghostBtn" onclick="document.getElementById('fReceiptFile').click()">📎 영수증 첨부</button>
       <input type="file" id="fReceiptFile" accept="image/*,application/pdf" style="display:none" onchange="handleReceiptUpload(this)">
       <div id="receiptPreview"></div>
-    </div>
-    <div class="field">
-      <label>전체 상태 <span style="font-weight:400;color:var(--sub)">(예약·정산·리뷰 상태에 따라 자동 계산돼요)</span></label>
-      <div id="statusPreview"></div>
     </div>
 
     <div class="modalActions">
@@ -807,28 +809,28 @@ function renderList(){
     const ddayLabel = days===null ? '-' : (days>=0 ? `D-${days}` : `D+${-days}`);
     const statusCls = c.status==='완료' ? 'done' : 'progress';
     return `<div class="cCard" onclick="openModal('${c.id}')">
-      <div class="cHeadRow">
-        <span class="name">${escapeHtml(c.name||'(이름 없음)')}</span>
-        <span class="statusPill ${statusCls}">${c.status}</span>
-        <span class="tag">${escapeHtml(c.site||'-')}</span>
-        <span class="tag alt">${escapeHtml(c.category||'-')}</span>
-        ${(c.tagsType1||[]).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
-        ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
-      </div>
-      <div class="cMainRow">
-        <div class="dday ${cls}">${ddayLabel}<small>${c.reviewStatus||''}</small></div>
-        <div class="qeBox" onclick="event.stopPropagation()">
-          <span class="qePill">예약방법: <select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></span>
-          <span class="qePill">리뷰상태: <select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></span>
+      <div class="dday ${cls}">${ddayLabel}<small>${c.reviewStatus||''}</small></div>
+      <div class="cBody">
+        <div class="cHeadRow">
+          <span class="name">${escapeHtml(c.name||'(이름 없음)')}</span>
+          <span class="statusPill ${statusCls}">${c.status}</span>
+          <span class="tag">${escapeHtml(c.site||'-')}</span>
+          <span class="tag alt">${escapeHtml(c.category||'-')}</span>
+          ${(c.tagsType1||[]).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+          ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
         </div>
-        <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
+        <div class="qeBox" onclick="event.stopPropagation()" title="이 3가지(+예약완료)로 전체 상태가 결정돼요">
+          <span class="qePill">리뷰상태: <select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></span>
+          <span class="qePill">정산상태: <select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></span>
+          ${c.naverReviewRequired ? `<span class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></span>` : ''}
+        </div>
+        <div class="cSubRow" onclick="event.stopPropagation()">
+          <span class="qePill">예약방법: <select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></span>
+          ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
+        </div>
+        ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
       </div>
-      <div class="cSubRow" onclick="event.stopPropagation()">
-        <span class="qePill">정산상태: <select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></span>
-        ${c.naverReviewRequired ? `<span class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></span>` : ''}
-        ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
-      </div>
-      ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
+      <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
     </div>`;
   }).join('');
 }
