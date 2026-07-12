@@ -201,7 +201,7 @@
   .field textarea{resize:vertical;min-height:56px;}
   .fieldRow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .checkRow{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin:2px 0 14px;}
-  .modalActions{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+  .modalActions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:6px;}
   .deleteBtn{background:none;border:none;color:var(--danger);font-size:13px;text-decoration:underline;padding:0;}
   .deleteBtnBig{background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger);border-radius:9px;
     padding:9px 16px;font-weight:700;font-size:13.5px;}
@@ -224,8 +224,8 @@
     padding:6px 10px;margin-top:8px;font-size:12.5px;}
   .receiptChip a{color:var(--navy);font-weight:600;text-decoration:none;}
   .receiptChip button{background:none;border:none;color:var(--sub);cursor:pointer;font-size:13px;}
-  .modalRight{display:flex;gap:10px;}
-  .cancelBtn{background:none;border:none;color:var(--sub);font-size:13.5px;padding:10px 4px;}
+  .cancelBtn{background:#fff;border:1px solid var(--line);color:var(--ink);font-size:13.5px;padding:10px 18px;border-radius:9px;}
+  .cancelBtn:hover{background:#f7f6f3;border-color:#c9c6bd;}
   .saveBtn{background:var(--ink);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-weight:600;font-size:13.5px;}
 
   /* ---------- Toast ---------- */
@@ -442,11 +442,9 @@
     </div>
 
     <div class="modalActions">
+      <button class="cancelBtn" onclick="closeModal()">취소</button>
+      <button class="saveBtn" onclick="saveCampaignFromForm()">저장</button>
       <button class="deleteBtnBig" id="deleteBtn" style="visibility:hidden" onclick="deleteCampaign()">🗑 삭제</button>
-      <div class="modalRight">
-        <button class="cancelBtn" onclick="closeModal()">취소</button>
-        <button class="saveBtn" onclick="saveCampaignFromForm()">저장</button>
-      </div>
     </div>
   </div>
 </div>
