@@ -186,10 +186,14 @@
     align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
   .modalBg.show{display:flex;}
   .modal{background:#fff;border-radius:18px;max-width:560px;width:100%;padding:28px 28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
-  .modal h2{margin:0;font-size:19px;}
+  .modal h2{margin:0 0 18px;font-size:19px;}
   .modalHeadRow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
-  .modalHeadRow #statusPreview{text-align:right;}
-  .modalHeadRow #statusPreview .statusReasons{justify-content:flex-end;max-width:220px;}
+  .modalHeadRow h2{margin:0;}
+  .modalHeadRight{display:flex;align-items:center;gap:14px;}
+  .modalHeadRight #statusPreview{text-align:right;}
+  .modalHeadRight #statusPreview .statusReasons{justify-content:flex-end;max-width:220px;}
+  .modalCloseX{background:none;border:none;font-size:22px;color:var(--sub);cursor:pointer;line-height:1;padding:2px 2px;}
+  .modalCloseX:hover{color:var(--ink);}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:6px;font-weight:600;}
   .field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
@@ -212,7 +216,7 @@
   .statusPill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-left:8px;vertical-align:middle;}
   .statusPill.done{background:var(--good-soft);color:var(--good);}
   .statusPill.progress{background:var(--warn-soft);color:var(--warn);}
-  .statusPill.big{font-size:13px;padding:6px 16px;margin-left:0;}
+  .statusPill.big{font-size:14.5px;padding:8px 20px;margin-left:0;}
   .statusReasons{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;}
   .reasonChip{font-size:10.5px;background:var(--warn-soft);color:var(--warn);padding:3px 8px;border-radius:6px;font-weight:600;}
   .cReason{font-size:10.5px;color:var(--warn);margin-top:5px;font-weight:600;}
@@ -375,7 +379,10 @@
   <div class="modal">
     <div class="modalHeadRow">
       <h2 id="modalTitle">새 캠페인 추가</h2>
-      <div id="statusPreview"></div>
+      <div class="modalHeadRight">
+        <div id="statusPreview"></div>
+        <button type="button" class="modalCloseX" onclick="closeModal()">✕</button>
+      </div>
     </div>
     <input type="hidden" id="fId">
     <div class="field"><label>업체명</label><input id="fName" placeholder="예: OO카페"></div>
