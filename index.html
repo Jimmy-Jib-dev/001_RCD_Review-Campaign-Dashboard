@@ -104,6 +104,9 @@
   .donutList .row{display:flex;align-items:center;gap:8px;color:var(--sub);}
   .donutList .sw{width:9px;height:9px;border-radius:3px;}
   .donutList b{color:var(--ink);margin-left:auto;font-weight:600;}
+  .statusDonutRow{cursor:pointer;padding:5px 8px;border-radius:8px;transition:background .12s;}
+  .statusDonutRow:hover{background:#f4f2ed;}
+  .statusDonutRow b{margin-left:8px;}
   .calHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .calNav{display:flex;gap:6px;}
   .calNav button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--sub);}
@@ -690,8 +693,9 @@ function renderStatusDonut(){
     ctx.beginPath(); ctx.arc(45,45,36,start,end);
     ctx.strokeStyle = color; ctx.lineWidth = 13; ctx.stroke();
     start = end;
-    const row = document.createElement('div'); row.className='row';
+    const row = document.createElement('div'); row.className='row statusDonutRow';
     row.innerHTML = `<span class="sw" style="background:${color}"></span>${label} <b>${val}건</b>`;
+    row.onclick = () => openStatusModal(label);
     list.appendChild(row);
   });
 }
@@ -795,29 +799,38 @@ function renderCalendar(){
 }
 function calShift(dir){ calCursor.setMonth(calCursor.getMonth()+dir); renderCalendar(); }
 
+function dayItemHtml(it){
+  const days = it.deadline ? diffDays(it.deadline) : null;
+  const cls = days===null ? 'done' : ddayClass(days, it.reviewStatus);
+  const ddayLabel = days===null ? '-' : (days>=0 ? `D-${days}` : `D+${-days}`);
+  return `<div class="dayItem" onclick="closeDayModal(); openModal('${it.id}')">
+    <div class="dRow1"><span class="dName">${escapeHtml(it.name||'(이름 없음)')}</span><span class="dReward">${fmtWon(it.reward)}</span></div>
+    <div class="dMeta">
+      <span class="tag">${escapeHtml(it.site||'-')}</span>
+      <span class="tag alt">${escapeHtml(it.category||'-')}</span>
+      <span class="tag alt">${it.reviewStatus||'-'}</span>
+      <span class="tag alt">${ddayLabel}</span>
+    </div>
+  </div>`;
+}
+
+function showSummaryModal(title, items, emptyText){
+  document.getElementById('dayModalTitle').textContent = title;
+  const list = document.getElementById('dayModalList');
+  list.innerHTML = items.length===0
+    ? `<div class="dayEmpty">${emptyText}</div>`
+    : items.map(dayItemHtml).join('');
+  document.getElementById('dayModalBg').classList.add('show');
+}
+
 function openDayModal(ds){
   const items = campaigns.filter(c=>c.deadline===ds).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  document.getElementById('dayModalTitle').textContent = fmtDateKR(ds) + ' 리뷰 마감';
-  const list = document.getElementById('dayModalList');
-  if(items.length===0){
-    list.innerHTML = '<div class="dayEmpty">이 날짜에 마감 예정인 캠페인이 없어요.</div>';
-  } else {
-    list.innerHTML = items.map(it=>{
-      const days = diffDays(it.deadline);
-      const cls = ddayClass(days, it.reviewStatus);
-      const ddayLabel = days>=0 ? `D-${days}` : `D+${-days}`;
-      return `<div class="dayItem" onclick="closeDayModal(); openModal('${it.id}')">
-        <div class="dRow1"><span class="dName">${escapeHtml(it.name||'(이름 없음)')}</span><span class="dReward">${fmtWon(it.reward)}</span></div>
-        <div class="dMeta">
-          <span class="tag">${escapeHtml(it.site||'-')}</span>
-          <span class="tag alt">${escapeHtml(it.category||'-')}</span>
-          <span class="tag alt">${it.reviewStatus||'-'}</span>
-          <span class="tag alt">${ddayLabel}</span>
-        </div>
-      </div>`;
-    }).join('');
-  }
-  document.getElementById('dayModalBg').classList.add('show');
+  showSummaryModal(fmtDateKR(ds) + ' 리뷰 마감', items, '이 날짜에 마감 예정인 캠페인이 없어요.');
+}
+
+function openStatusModal(status){
+  const items = campaigns.filter(c=>c.status===status).sort((a,b)=>(a.deadline||'9999').localeCompare(b.deadline||'9999'));
+  showSummaryModal(`${status} 캠페인 (${items.length}건)`, items, '해당 상태의 캠페인이 없어요.');
 }
 function closeDayModal(){ document.getElementById('dayModalBg').classList.remove('show'); }
 
