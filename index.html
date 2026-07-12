@@ -142,21 +142,26 @@
   /* ---------- List ---------- */
   .listEmpty{text-align:center;color:var(--sub);padding:50px 20px;font-size:14px;}
   .cCard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;
-    display:flex;align-items:center;gap:16px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
+    display:flex;flex-direction:column;gap:10px;margin-bottom:10px;cursor:pointer;transition:transform .12s;}
   .cCard:hover{transform:translateY(-1px);}
+  .cHeadRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .cHeadRow .name{font-weight:700;font-size:15.5px;}
+  .cMainRow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
   .dday{flex:0 0 56px;text-align:center;border-radius:10px;padding:8px 4px;font-weight:800;font-size:13px;}
   .dday small{display:block;font-weight:500;font-size:9.5px;margin-top:1px;}
   .dday.ok{background:var(--good-soft);color:var(--good);}
   .dday.warn{background:var(--warn-soft);color:var(--warn);}
   .dday.danger{background:var(--danger-soft);color:var(--danger);}
   .dday.done{background:#eee;color:#999;}
-  .cBody{flex:1;min-width:0;}
-  .cBody .name{font-weight:700;font-size:15px;margin-bottom:5px;}
+  .qeBox{display:inline-flex;background:#f1efea;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .qeBox .qePill{border-radius:0;border-right:1px solid var(--line);margin:0;background:transparent;}
+  .qeBox .qePill:last-child{border-right:none;}
   .cTags{display:flex;gap:6px;flex-wrap:wrap;}
   .tag{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--navy-soft);color:var(--navy);font-weight:600;}
   .tag.alt{background:#f1f1ee;color:var(--sub);font-weight:500;}
-  .cReward{flex:0 0 auto;text-align:right;font-weight:700;font-size:14.5px;white-space:nowrap;}
+  .cReward{margin-left:auto;text-align:right;font-weight:700;font-size:14.5px;white-space:nowrap;}
   .cReward .st{display:block;font-size:11px;font-weight:600;color:var(--sub);margin-top:3px;}
+  .cSubRow{display:flex;gap:8px;flex-wrap:wrap;}
 
   /* ---------- Modal ---------- */
   .modalBg{display:none;position:fixed;inset:0;background:rgba(20,18,15,.42);z-index:50;
@@ -207,6 +212,24 @@
     .statGrid{grid-template-columns:1fr 1fr;}
     .splitGrid{grid-template-columns:1fr;}
     .fieldRow{grid-template-columns:1fr;}
+  }
+  @media(max-width:480px){
+    body{overflow-x:hidden;}
+    #app{padding-left:14px;padding-right:14px;}
+    .statGrid{grid-template-columns:1fr 1fr;gap:10px;}
+    .statCard{padding:14px 14px;}
+    .panel{padding:16px 14px;}
+    .calGrid{gap:2px;}
+    .calGrid .dow{font-size:9.5px;}
+    .calCell{font-size:9px;padding:3px 2px;border-radius:6px;}
+    .calCell .num{font-size:10.5px;}
+    .calCell .tag{font-size:6.8px;padding:1px 2px;}
+    .siteRow{flex-wrap:wrap;row-gap:4px;}
+    .siteRow .siteName{flex:1 1 auto;}
+    .siteRow .barTrack{order:3;flex:1 1 100%;}
+    .siteRow .siteStats{flex:0 0 auto;font-size:11px;white-space:normal;text-align:right;}
+    .timelineTrack{gap:0;}
+    .tDay{flex:0 0 62px;}
   }
 </style>
 </head>
@@ -781,27 +804,29 @@ function renderList(){
     const cls = days===null ? 'done' : ddayClass(days, c.reviewStatus);
     const ddayLabel = days===null ? '-' : (days>=0 ? `D-${days}` : `D+${-days}`);
     const statusCls = c.status==='완료' ? 'done' : 'progress';
-    const allTags = [...(c.tagsType1||[]).map(t=>'T1:'+t), ...(c.tagsType2||[]).map(t=>'T2:'+t)];
     return `<div class="cCard" onclick="openModal('${c.id}')">
-      <div class="dday ${cls}">${ddayLabel}<small>${c.reviewStatus||''}</small></div>
-      <div class="cBody">
-        <div class="name">${escapeHtml(c.name||'(이름 없음)')}<span class="statusPill ${statusCls}">${c.status}</span></div>
-        <div class="cTags">
-          <span class="tag">${escapeHtml(c.site||'-')}</span>
-          <span class="tag alt">${escapeHtml(c.category||'-')}</span>
-          ${(c.tagsType1||[]).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
-          ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
-        </div>
-        <div class="qeRow" onclick="event.stopPropagation()">
+      <div class="cHeadRow">
+        <span class="name">${escapeHtml(c.name||'(이름 없음)')}</span>
+        <span class="statusPill ${statusCls}">${c.status}</span>
+        <span class="tag">${escapeHtml(c.site||'-')}</span>
+        <span class="tag alt">${escapeHtml(c.category||'-')}</span>
+        ${(c.tagsType1||[]).map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+        ${(c.tagsType2||[]).map(t=>`<span class="tag alt">#${escapeHtml(t)}</span>`).join('')}
+      </div>
+      <div class="cMainRow">
+        <div class="dday ${cls}">${ddayLabel}<small>${c.reviewStatus||''}</small></div>
+        <div class="qeBox" onclick="event.stopPropagation()">
           <span class="qePill">예약방법: <select onchange="quickUpdate('${c.id}','reserveMethod',this.value)">${opt(RESERVE_OPTS,c.reserveMethod)}</select></span>
           <span class="qePill">리뷰상태: <select onchange="quickUpdate('${c.id}','reviewStatus',this.value)">${opt(REVIEW_OPTS,c.reviewStatus)}</select></span>
-          <span class="qePill">정산상태: <select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></span>
-          ${c.naverReviewRequired ? `<span class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></span>` : ''}
-          ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
         </div>
-        ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
+        <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
       </div>
-      <div class="cReward">${fmtWon(c.reward)}<span class="st">${c.settleStatus||''}</span></div>
+      <div class="cSubRow" onclick="event.stopPropagation()">
+        <span class="qePill">정산상태: <select onchange="quickUpdate('${c.id}','settleStatus',this.value)">${opt(SETTLE_OPTS,c.settleStatus)}</select></span>
+        ${c.naverReviewRequired ? `<span class="qePill">네이버 리뷰상태: <select onchange="quickUpdate('${c.id}','naverReviewStatus',this.value)">${opt(REVIEW_OPTS,c.naverReviewStatus)}</select></span>` : ''}
+        ${c.receipt ? `<span class="qePill receiptPill" onclick="event.stopPropagation();window.open('${c.receipt.url}','_blank')">📎 영수증</span>` : ''}
+      </div>
+      ${c.status!=='완료' ? `<div class="cReason">진행중 사유: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
     </div>`;
   }).join('');
 }
