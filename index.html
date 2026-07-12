@@ -98,12 +98,17 @@
   .calHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .calNav{display:flex;gap:6px;}
   .calNav button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--sub);}
-  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
   .calGrid .dow{font-size:11px;color:var(--sub);text-align:center;padding-bottom:4px;}
-  .calCell{aspect-ratio:1/0.82;border-radius:8px;font-size:11.5px;padding:4px;position:relative;color:var(--ink);text-align:center;box-sizing:border-box;}
-  .calCell.pad{visibility:hidden;}
+  .calGrid .dow.sun{color:var(--danger);font-weight:700;}
+  .calCell{aspect-ratio:1/0.82;border-radius:8px;font-size:11.5px;padding:4px;position:relative;color:var(--ink);
+    text-align:center;box-sizing:border-box;border:1px solid var(--line);}
+  .calCell.pad{visibility:hidden;border:none;}
   .calCell.today{outline:1.5px solid var(--ink);}
+  .calCell.sun .num{color:var(--danger);}
   .calCell .num{font-weight:600;}
+  .holidayLabel{font-size:7px;color:var(--danger);font-weight:700;display:block;margin-top:1px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .calCell .tag{font-size:8.5px;background:var(--accent-soft);color:var(--accent);border-radius:5px;
     padding:1px 3px;margin-top:2px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .calCell .tag.done{background:var(--good-soft);color:var(--good);}
@@ -231,6 +236,7 @@
     .calCell{font-size:9px;padding:3px 2px;border-radius:6px;}
     .calCell .num{font-size:10.5px;}
     .calCell .tag{font-size:6.8px;padding:1px 2px;}
+    .holidayLabel{font-size:6px;}
     .siteRow{flex-wrap:wrap;row-gap:4px;}
     .siteRow .siteName{flex:1 1 auto;}
     .siteRow .barTrack{order:3;flex:1 1 100%;}
@@ -698,13 +704,31 @@ function renderDonut(){
   });
 }
 
+let holidayCache = {};
+async function ensureHolidays(year){
+  if(holidayCache[year]) return;
+  try{
+    const res = await fetch(`https://date.nager.at/api/v3/publicholidays/${year}/KR`);
+    const data = await res.json();
+    const map = {};
+    data.forEach(h=>{ map[h.date] = h.localName || h.name; });
+    holidayCache[year] = map;
+  }catch(e){
+    console.error('공휴일 정보를 불러오지 못했어요', e);
+    holidayCache[year] = {};
+  }
+  renderCalendar();
+}
+
 function renderCalendar(){
   const y = calCursor.getFullYear(), m = calCursor.getMonth();
   document.getElementById('calTitle').textContent = `${y}년 ${m+1}월`;
   const grid = document.getElementById('calGrid'); grid.innerHTML='';
-  ['일','월','화','수','목','금','토'].forEach(d=>{
-    const dv = document.createElement('div'); dv.className='dow'; dv.textContent=d; grid.appendChild(dv);
+  ['일','월','화','수','목','금','토'].forEach((d,i)=>{
+    const dv = document.createElement('div'); dv.className='dow'+(i===0?' sun':''); dv.textContent=d; grid.appendChild(dv);
   });
+  if(!holidayCache[y]) ensureHolidays(y);
+  const holidays = holidayCache[y] || {};
   const first = new Date(y,m,1);
   const startPad = first.getDay();
   const daysInMonth = new Date(y,m+1,0).getDate();
@@ -712,9 +736,13 @@ function renderCalendar(){
   for(let d=1; d<=daysInMonth; d++){
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const items = campaigns.filter(c=>c.deadline===ds);
+    const isSun = new Date(y,m,d).getDay()===0;
+    const holidayName = holidays[ds];
     const cell = document.createElement('div');
-    cell.className = 'calCell' + (ds===todayStr()?' today':'') + (items.length ? ' hasItems' : '');
-    cell.innerHTML = `<div class="num">${d}</div>` + items.slice(0,2).map(it=>`<span class="tag ${it.status==='완료'?'done':'progress'}" title="${it.name}">${it.name}</span>`).join('');
+    cell.className = 'calCell' + (ds===todayStr()?' today':'') + (items.length ? ' hasItems' : '') + (isSun||holidayName ? ' sun' : '');
+    cell.innerHTML = `<div class="num">${d}</div>`
+      + (holidayName ? `<span class="holidayLabel" title="${escapeHtml(holidayName)}">${escapeHtml(holidayName)}</span>` : '')
+      + items.slice(0,2).map(it=>`<span class="tag ${it.status==='완료'?'done':'progress'}" title="${it.name}">${it.name}</span>`).join('');
     cell.onclick = () => openDayModal(ds);
     grid.appendChild(cell);
   }
