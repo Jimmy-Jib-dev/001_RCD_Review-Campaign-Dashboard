@@ -119,7 +119,7 @@
   .calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
   .calGrid .dow{font-size:12.5px;color:var(--sub);text-align:center;padding-bottom:6px;}
   .calGrid .dow.sun{color:var(--danger);font-weight:700;}
-  .calCell{aspect-ratio:1/0.95;border-radius:9px;font-size:13px;padding:6px;position:relative;color:var(--ink);
+  .calCell{min-height:84px;border-radius:9px;font-size:13px;padding:6px;position:relative;color:var(--ink);
     text-align:center;box-sizing:border-box;border:1px solid var(--line);}
   .calCell.pad{visibility:hidden;border:none;}
   .calCell.today{outline:1.5px solid var(--ink);}
@@ -272,7 +272,7 @@
     .panel{padding:16px 14px;}
     .calGrid{gap:2px;}
     .calGrid .dow{font-size:9.5px;}
-    .calCell{font-size:9px;padding:3px 2px;border-radius:6px;}
+    .calCell{font-size:9px;padding:3px 2px;border-radius:6px;min-height:60px;}
     .calCell .num{font-size:10.5px;}
     .calCell .tag{font-size:6.8px;padding:1px 2px;}
     .holidayLabel{font-size:6px;}
