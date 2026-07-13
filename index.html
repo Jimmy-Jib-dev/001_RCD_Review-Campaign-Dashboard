@@ -974,10 +974,10 @@ function renderSitePerformance(){
     el.innerHTML = '<div class="listEmpty" style="padding:24px 0">캠페인을 등록하면 사이트별 실적이 여기 표시돼요.</div>';
     return;
   }
-  const max = Math.max(...rows.map(r=>r[1].reward), 1);
+  const total = rows.reduce((sum,r)=>sum+r[1].reward, 0) || 1;
   const visible = sitePerfExpanded ? rows : rows.slice(0,5);
   const rowsHtml = visible.map(([site,d],i)=>{
-    const pct = Math.max(4, Math.round(d.reward/max*100));
+    const pct = Math.max(1, Math.round(d.reward/total*100));
     const b = d.byStatus;
     return `<div class="siteRow">
       <span class="siteRank">${i+1}</span>
