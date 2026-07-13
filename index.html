@@ -165,10 +165,14 @@
   .siteRow .siteRank{flex:0 0 16px;font-size:11px;color:var(--sub);font-weight:700;text-align:left;}
   .siteRow .siteName{flex:0 0 120px;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .siteRow .barTrack{flex:1;height:14px;background:#efece4;border-radius:7px;overflow:hidden;}
-  .siteRow .barFill{height:100%;border-radius:7px;background:linear-gradient(90deg,#e8905a,var(--navy));}
+  .siteRow .barFill{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,#e8905a,var(--navy));}
   .siteRow .barPct{flex:0 0 34px;font-size:11px;font-weight:700;color:var(--sub);text-align:right;}
   .siteRow .siteStats{flex:0 0 340px;text-align:right;font-size:12px;color:var(--sub);white-space:normal;line-height:1.6;}
   .siteRow .siteStats b{color:var(--ink);font-size:13px;}
+  .siteRow .siteStats .stChip{font-weight:700;padding:1px 5px;border-radius:5px;white-space:nowrap;}
+  .siteRow .siteStats .stChip.pending{color:#c94b3f;background:#fbe9e6;}
+  .siteRow .siteStats .stChip.resv{color:#4a9d5b;background:#e7f5ea;}
+  .siteRow .siteStats .stChip.reg{color:#3b74c4;background:#e6eefb;}
   .sitePerfMoreBtn{display:block;width:100%;margin-top:10px;padding:9px;border:1px dashed var(--line);
     border-radius:9px;background:#fbfaf8;color:var(--sub);font-size:12.5px;font-weight:700;cursor:pointer;text-align:center;}
   .sitePerfMoreBtn:hover{background:#f4f2ed;color:var(--ink);}
@@ -330,8 +334,10 @@
     .field input[type=date]{text-align:left;width:auto;min-width:0;max-width:180px;padding:10px 12px;}
     .field input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0;}
     .field label.fieldLabelRow{display:block;margin-bottom:4px;}
-    .field label.fieldLabelRow > span:first-child{display:block;margin-bottom:5px;flex:none;overflow:visible;text-overflow:clip;white-space:normal;width:auto;}
-    .resvToggle{display:inline-flex;margin-left:0;max-width:100%;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;padding:5px 10px;font-size:11px;}
+    .field label.fieldLabelRow > span:first-child{display:block;margin-bottom:6px;flex:none;overflow:visible;text-overflow:clip;white-space:normal;width:auto;}
+    .resvToggle{display:flex;align-items:center;gap:6px;border:none;background:none;border-radius:0;
+      padding:0;margin:0;max-width:none;overflow:visible;text-overflow:clip;white-space:normal;
+      font-size:13px;font-weight:600;color:var(--sub);box-sizing:border-box;}
     .modalHeadRow{justify-content:flex-start;}
     .modalHeadRight{width:100%;justify-content:flex-end;flex-wrap:wrap;gap:8px;}
     .modalHeadRight #statusPreview{text-align:right;flex:1;min-width:0;}
@@ -984,7 +990,7 @@ function renderSitePerformance(){
       <span class="siteName" title="${escapeHtml(site)}">${escapeHtml(site)}</span>
       <span class="barTrack"><span class="barFill" style="width:${pct}%"></span></span>
       <span class="barPct">${pct}%</span>
-      <span class="siteStats"><b>${fmtWon(d.reward)}</b> · ${d.count}건 · 진행전 ${b['진행전']} · 예약확정 ${b['예약확정']} · 등록완료 ${b['등록완료']}</span>
+      <span class="siteStats"><b>${fmtWon(d.reward)}</b> · ${d.count}건 · <span class="stChip pending">진행전 ${b['진행전']}</span> <span class="stChip resv">예약확정 ${b['예약확정']}</span> <span class="stChip reg">등록완료 ${b['등록완료']}</span></span>
     </div>`;
   }).join('');
   const moreHtml = rows.length>5
