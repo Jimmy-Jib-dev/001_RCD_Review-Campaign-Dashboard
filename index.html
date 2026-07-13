@@ -115,11 +115,13 @@
   .donutTotal{font-size:28px;font-weight:800;letter-spacing:-.02em;}
   .donutList{display:flex;flex-direction:column;gap:8px;font-size:13px;margin-top:14px;}
   .donutList .row{display:flex;align-items:center;gap:8px;color:var(--sub);}
-  .donutList .sw{width:9px;height:9px;border-radius:3px;}
+  .donutList .sw{width:9px;height:9px;border-radius:3px;flex:0 0 auto;}
   .donutList b{color:var(--ink);margin-left:auto;font-weight:600;}
-  .statusDonutRow{cursor:pointer;padding:5px 8px;border-radius:8px;transition:background .12s;}
+  #statusDonutList{gap:2px;}
+  .statusDonutRow{cursor:pointer;padding:4px 8px;border-radius:8px;transition:background .12s;}
   .statusDonutRow:hover{background:#f4f2ed;}
-  .statusDonutRow b{margin-left:8px;}
+  .statusDonutRow .stLabel{flex:0 0 54px;}
+  .statusDonutRow b.stCount{margin-left:auto;min-width:30px;text-align:right;font-variant-numeric:tabular-nums;}
   .calHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .calNav{display:flex;gap:6px;}
   .calNav button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--sub);}
@@ -162,10 +164,14 @@
   .siteRow:last-child{border-bottom:none;}
   .siteRow .siteRank{flex:0 0 16px;font-size:11px;color:var(--sub);font-weight:700;text-align:left;}
   .siteRow .siteName{flex:0 0 120px;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .siteRow .barTrack{flex:1;height:10px;background:#f1efea;border-radius:6px;overflow:hidden;}
-  .siteRow .barFill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--navy));}
+  .siteRow .barTrack{flex:1;height:14px;background:#efece4;border-radius:7px;overflow:hidden;}
+  .siteRow .barFill{height:100%;border-radius:7px;background:linear-gradient(90deg,#e8905a,var(--navy));}
+  .siteRow .barPct{flex:0 0 34px;font-size:11px;font-weight:700;color:var(--sub);text-align:right;}
   .siteRow .siteStats{flex:0 0 340px;text-align:right;font-size:12px;color:var(--sub);white-space:normal;line-height:1.6;}
   .siteRow .siteStats b{color:var(--ink);font-size:13px;}
+  .sitePerfMoreBtn{display:block;width:100%;margin-top:10px;padding:9px;border:1px dashed var(--line);
+    border-radius:9px;background:#fbfaf8;color:var(--sub);font-size:12.5px;font-weight:700;cursor:pointer;text-align:center;}
+  .sitePerfMoreBtn:hover{background:#f4f2ed;color:var(--ink);}
 
   /* ---------- Filters ---------- */
   .filterRow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
@@ -296,10 +302,11 @@
     .calCell .tag{font-size:6.8px;padding:1px 2px;}
     .holidayLabel{font-size:6px;}
     .siteRow{flex-wrap:wrap;row-gap:4px;gap:8px;}
-    .siteRow .siteRank{flex:0 0 14px;}
-    .siteRow .siteName{flex:1 1 auto;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .siteRow .siteRank{flex:0 0 14px;order:0;}
+    .siteRow .siteName{flex:1 1 auto;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;order:0;}
+    .siteRow .barPct{order:2;flex:0 0 30px;font-size:10.5px;}
     .siteRow .barTrack{order:3;flex:1 1 100%;}
-    .siteRow .siteStats{flex:0 0 auto;font-size:11px;white-space:normal;text-align:right;}
+    .siteRow .siteStats{order:4;flex:0 0 auto;font-size:11px;white-space:normal;text-align:right;}
     .timelineTrack{gap:0;}
     .tDay{flex:0 0 62px;width:62px;min-width:62px;}
     .cCard{display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:6px 10px;padding:14px;}
@@ -322,12 +329,13 @@
     .field{overflow:hidden;}
     .field input[type=date]{text-align:left;width:auto;min-width:0;max-width:180px;padding:10px 12px;}
     .field input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0;}
-    .field label.fieldLabelRow{flex-wrap:nowrap;gap:8px;flex-direction:column;align-items:flex-start;}
-    .field label.fieldLabelRow > span:first-child{flex:none;overflow:visible;text-overflow:clip;white-space:normal;width:auto;}
-    .resvToggle{align-self:flex-end;margin-left:0;max-width:100%;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;padding:5px 10px;font-size:11px;}
-    .modalHeadRight{justify-content:flex-end;flex-wrap:wrap;gap:8px;}
-    .modalHeadRight #statusPreview{text-align:right;}
-    .modalHeadRight #statusPreview .statusReasons{justify-content:flex-end;max-width:100%;}
+    .field label.fieldLabelRow{display:block;margin-bottom:4px;}
+    .field label.fieldLabelRow > span:first-child{display:block;margin-bottom:5px;flex:none;overflow:visible;text-overflow:clip;white-space:normal;width:auto;}
+    .resvToggle{display:inline-flex;margin-left:0;max-width:100%;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis;padding:5px 10px;font-size:11px;}
+    .modalHeadRow{justify-content:flex-start;}
+    .modalHeadRight{width:100%;justify-content:flex-end;flex-wrap:wrap;gap:8px;}
+    .modalHeadRight #statusPreview{text-align:right;flex:1;min-width:0;}
+    .modalHeadRight #statusPreview .statusReasons{justify-content:flex-end;max-width:100%;width:100%;}
   }
 </style>
 </head>
@@ -433,7 +441,6 @@
       <option value="진행전">진행전</option>
       <option value="예약확정">예약확정</option>
       <option value="등록완료">등록완료</option>
-      <option value="완료">완료</option>
     </select>
     <input type="text" id="fSearch" placeholder="업체명, 태그 검색" oninput="renderList()">
     <button class="ghostBtn" onclick="exportExcel()">📊 Excel로 출력</button>
@@ -485,7 +492,7 @@
       <label class="checkRow" style="margin:2px 0 14px"><input type="checkbox" id="fNaverReviewRequired" onchange="toggleNaverReviewField(); refreshStatusPreview()"> 영수증 리뷰 업로드 필요</label>
     </div>
     <div class="field" id="naverReviewField" style="display:none">
-      <label>네이버 리뷰 상태</label>
+      <label>영수증 리뷰 업로드 상태</label>
       <select id="fNaverReviewStatus" onchange="refreshStatusPreview()"><option value="작성전">작성전</option><option value="작성중">작성중</option>
         <option value="작성완료">작성완료</option><option value="등록완료">등록완료</option></select>
     </div>
@@ -747,7 +754,7 @@ function renderAll(){
 }
 
 function renderStats(){
-  const ongoing = campaigns.filter(c=>c.status!=='완료');
+  const ongoing = campaigns.filter(c=>c.status!=='등록완료');
   const due7 = ongoing.filter(c=>c.deadline && diffDays(c.deadline)>=0 && diffDays(c.deadline)<=7);
   const pendingReview = ongoing.filter(c=>['작성전','작성중'].includes(c.reviewStatus));
   const pendingSettle = campaigns.filter(c=>c.settleStatus==='대기');
@@ -758,15 +765,14 @@ function renderStats(){
 }
 
 function computeStatus(c){
-  const naverOk = c.naverReviewRequired ? (c.naverReviewStatus === '등록완료') : true;
-  if(c.settleStatus === '완료' && c.reviewStatus === '등록완료' && naverOk) return '완료';
-  if(c.reviewStatus === '등록완료') return '등록완료';
+  const receiptOk = c.naverReviewRequired ? (c.naverReviewStatus === '등록완료') : true;
+  const settleOk = (c.settleStatus === '완료' || c.settleStatus === '해당없음');
+  if(c.reservationDone && c.reviewStatus === '등록완료' && settleOk && receiptOk) return '등록완료';
   if(c.reservationDone) return '예약확정';
   return '진행전';
 }
 
 function statusClass(status){
-  if(status==='완료') return 'done';
   if(status==='등록완료') return 'reg';
   if(status==='예약확정') return 'resv';
   return 'pending'; // 진행전
@@ -776,13 +782,13 @@ function statusReasons(c){
   const reasons = [];
   if(!c.reservationDone) reasons.push('예약 미완료');
   if(c.reviewStatus !== '등록완료') reasons.push('리뷰 미등록');
-  if(c.settleStatus !== '완료') reasons.push('정산 미완료');
-  if(c.naverReviewRequired && c.naverReviewStatus !== '등록완료') reasons.push('네이버 리뷰 미등록');
+  if(c.settleStatus !== '완료' && c.settleStatus !== '해당없음') reasons.push('정산 미완료');
+  if(c.naverReviewRequired && c.naverReviewStatus !== '등록완료') reasons.push('영수증 리뷰 업로드 미등록');
   return reasons;
 }
 
 function renderStatusDonut(){
-  const counts = { '진행전':0, '예약확정':0, '등록완료':0, '완료':0 };
+  const counts = { '진행전':0, '예약확정':0, '등록완료':0 };
   campaigns.forEach(c=>{ counts[c.status] = (counts[c.status]||0) + 1; });
   const canvas = document.getElementById('statusDonutCanvas');
   const ctx = canvas.getContext('2d');
@@ -793,7 +799,7 @@ function renderStatusDonut(){
     list.innerHTML = '<div class="row" style="color:var(--sub)">아직 데이터가 없어요</div>';
     return;
   }
-  const colorMap = { '진행전':'#c94b3f', '예약확정':'#4a9d5b', '등록완료':'#3b74c4', '완료':'#3f8f5f' };
+  const colorMap = { '진행전':'#c94b3f', '예약확정':'#4a9d5b', '등록완료':'#3b74c4' };
   const parts = Object.entries(counts).filter(([,v])=>v>0);
   let start = -Math.PI/2;
   parts.forEach(([label,val])=>{
@@ -804,7 +810,7 @@ function renderStatusDonut(){
     ctx.strokeStyle = color; ctx.lineWidth = 13; ctx.stroke();
     start = end;
     const row = document.createElement('div'); row.className='row statusDonutRow';
-    row.innerHTML = `<span class="sw" style="background:${color}"></span>${label} <b>${val}건</b>`;
+    row.innerHTML = `<span class="sw" style="background:${color}"></span><span class="stLabel">${label}</span><b class="stCount">${val}건</b>`;
     row.onclick = () => openStatusModal(label);
     list.appendChild(row);
   });
@@ -858,7 +864,7 @@ function renderDonut(){
     start = end;
     const row = document.createElement('div'); row.className='row';
     row.innerHTML = `<span class="sw" style="background:${colors[i%colors.length]}"></span>${cat}
-      <b>${fmtWon(val)} · ${Math.round(frac*100)}%</b>`;
+      <b>${fmtWon(val)} · ${String(Math.round(frac*100)).padStart(2,'0')}%</b>`;
     list.appendChild(row);
   });
 }
@@ -952,7 +958,7 @@ function computeSitePerformance(){
   const bySite = {};
   campaigns.forEach(c=>{
     const key = c.site && c.site.trim() ? c.site.trim() : '(미지정)';
-    if(!bySite[key]) bySite[key] = { count:0, reward:0, byStatus:{'진행전':0,'예약확정':0,'등록완료':0,'완료':0} };
+    if(!bySite[key]) bySite[key] = { count:0, reward:0, byStatus:{'진행전':0,'예약확정':0,'등록완료':0} };
     bySite[key].count += 1;
     bySite[key].reward += Number(c.reward)||0;
     bySite[key].byStatus[c.status] = (bySite[key].byStatus[c.status]||0) + 1;
@@ -960,6 +966,7 @@ function computeSitePerformance(){
   return Object.entries(bySite).sort((a,b)=>b[1].reward-a[1].reward);
 }
 
+let sitePerfExpanded = false;
 function renderSitePerformance(){
   const el = document.getElementById('sitePerfList');
   const rows = computeSitePerformance();
@@ -968,16 +975,24 @@ function renderSitePerformance(){
     return;
   }
   const max = Math.max(...rows.map(r=>r[1].reward), 1);
-  el.innerHTML = rows.map(([site,d],i)=>{
+  const visible = sitePerfExpanded ? rows : rows.slice(0,5);
+  const rowsHtml = visible.map(([site,d],i)=>{
     const pct = Math.max(4, Math.round(d.reward/max*100));
     const b = d.byStatus;
     return `<div class="siteRow">
       <span class="siteRank">${i+1}</span>
       <span class="siteName" title="${escapeHtml(site)}">${escapeHtml(site)}</span>
       <span class="barTrack"><span class="barFill" style="width:${pct}%"></span></span>
-      <span class="siteStats"><b>${fmtWon(d.reward)}</b> · ${d.count}건 · 진행전 ${b['진행전']} · 예약확정 ${b['예약확정']} · 등록완료 ${b['등록완료']} · 완료 ${b['완료']}</span>
+      <span class="barPct">${pct}%</span>
+      <span class="siteStats"><b>${fmtWon(d.reward)}</b> · ${d.count}건 · 진행전 ${b['진행전']} · 예약확정 ${b['예약확정']} · 등록완료 ${b['등록완료']}</span>
     </div>`;
   }).join('');
+  const moreHtml = rows.length>5
+    ? `<button type="button" class="sitePerfMoreBtn" onclick="sitePerfExpanded=!sitePerfExpanded;renderSitePerformance();">
+        ${sitePerfExpanded ? '접기 ▲' : `${rows.length-5}개 더보기 ▾`}
+      </button>`
+    : '';
+  el.innerHTML = rowsHtml + moreHtml;
 }
 
 function renderSiteFilter(){
@@ -1078,9 +1093,9 @@ function renderList(keepPage){
         <div class="qeBox" onclick="event.stopPropagation()" title="이 3가지(+예약완료)로 전체 상태가 결정돼요">
           ${qePill('리뷰상태', c.id, 'reviewStatus', REVIEW_OPTS, c.reviewStatus)}
           ${qePill('정산상태', c.id, 'settleStatus', SETTLE_OPTS, c.settleStatus)}
-          ${c.naverReviewRequired ? qePill('네이버 리뷰상태', c.id, 'naverReviewStatus', REVIEW_OPTS, c.naverReviewStatus) : ''}
+          ${c.naverReviewRequired ? qePill('영수증 업로드상태', c.id, 'naverReviewStatus', REVIEW_OPTS, c.naverReviewStatus) : ''}
         </div>
-        ${c.status!=='완료' ? `<div class="cReason">완료까지 남은 조건: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
+        ${c.status!=='등록완료' ? `<div class="cReason">완료까지 남은 조건: ${statusReasons(c).map(escapeHtml).join(', ')}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1103,8 +1118,8 @@ function exportExcel(){
     '전체상태': c.status||'',
     '예약완료': c.reservationDone ? 'Y' : 'N',
     '클립영상 제작': c.vlog ? 'Y' : 'N',
-    '네이버 리뷰 필요': c.naverReviewRequired ? 'Y' : 'N',
-    '네이버 리뷰상태': c.naverReviewRequired ? (c.naverReviewStatus||'') : '',
+    '영수증 리뷰 업로드 필요': c.naverReviewRequired ? 'Y' : 'N',
+    '영수증 리뷰 업로드상태': c.naverReviewRequired ? (c.naverReviewStatus||'') : '',
     'Type.1 태그': (c.tagsType1||[]).join(', '),
     'Type.2 태그': (c.tagsType2||[]).join(', '),
     '제공내역': c.details||'',
@@ -1132,8 +1147,7 @@ function exportSitePerformanceExcel(){
     '캠페인 건수': d.count,
     '진행전': d.byStatus['진행전'],
     '예약확정': d.byStatus['예약확정'],
-    '등록완료': d.byStatus['등록완료'],
-    '완료': d.byStatus['완료']
+    '등록완료': d.byStatus['등록완료']
   }));
   const ws = XLSX.utils.json_to_sheet(data);
   ws['!cols'] = Object.keys(data[0]).map(k=>({wch: Math.max(10, k.length+2)}));
@@ -1237,7 +1251,7 @@ function renderStatusPreview(status, reasons){
   const el = document.getElementById('statusPreview');
   const cls = statusClass(status);
   let html = `<span class="statusPill ${cls}" style="font-size:12.5px;padding:6px 14px">${status}</span>`;
-  if(status!=='완료' && reasons && reasons.length){
+  if(status!=='등록완료' && reasons && reasons.length){
     html += `<div class="statusReasons">${reasons.map(r=>`<span class="reasonChip">${escapeHtml(r)}</span>`).join('')}</div>`;
   }
   el.innerHTML = html;
