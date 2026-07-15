@@ -417,6 +417,14 @@
           <div class="donutList" id="statusDonutList"></div>
         </div>
       </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:16px 0 12px">
+      <h3 style="font-size:12.5px;color:var(--sub);margin-bottom:10px">사이트별 실적 <span class="panelHeadRight"><button class="ghostBtn sitePerfExportBtn" onclick="exportSitePerformanceExcel()">Excel</button></span></h3>
+      <div class="donutWrap">
+        <canvas id="siteDonutCanvas" width="90" height="90"></canvas>
+        <div style="flex:1">
+          <div class="donutList" id="siteDonutList"></div>
+        </div>
+      </div>
     </div>
     <div class="panel">
       <div class="calHead">
@@ -428,13 +436,6 @@
       </div>
       <div class="calGrid" id="calGrid"></div>
     </div>
-  </div>
-
-  <div class="panel" id="sitePerfPanel">
-    <h3>사이트별 실적 <span class="panelHeadRight"><span class="legend">누적 리워드 기준</span>
-      <button class="ghostBtn sitePerfExportBtn" onclick="exportSitePerformanceExcel()">📊 Excel로 출력</button></span>
-    </h3>
-    <div id="sitePerfList"></div>
   </div>
 
   <div class="filterRow">
@@ -759,7 +760,7 @@ function renderAll(){
   renderDonut();
   renderStatusDonut();
   renderCalendar();
-  renderSitePerformance();
+  renderSiteDonut();
   renderSiteFilter();
   renderList();
 }
@@ -978,33 +979,36 @@ function computeSitePerformance(){
   return Object.entries(bySite).sort((a,b)=>b[1].reward-a[1].reward);
 }
 
-let sitePerfExpanded = false;
-function renderSitePerformance(){
-  const el = document.getElementById('sitePerfList');
+function renderSiteDonut(){
   const rows = computeSitePerformance();
+  const canvas = document.getElementById('siteDonutCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,90,90);
+  const list = document.getElementById('siteDonutList'); list.innerHTML='';
   if(rows.length===0){
-    el.innerHTML = '<div class="listEmpty" style="padding:24px 0">캠페인을 등록하면 사이트별 실적이 여기 표시돼요.</div>';
+    ctx.beginPath(); ctx.arc(45,45,36,0,Math.PI*2); ctx.strokeStyle='#eee'; ctx.lineWidth=13; ctx.stroke();
+    list.innerHTML = '<div class="row" style="color:var(--sub)">아직 데이터가 없어요</div>';
     return;
   }
-  const total = rows.reduce((sum,r)=>sum+r[1].reward, 0) || 1;
-  const visible = sitePerfExpanded ? rows : rows.slice(0,5);
-  const rowsHtml = visible.map(([site,d],i)=>{
-    const pct = Math.max(1, Math.round(d.reward/total*100));
-    const b = d.byStatus;
-    return `<div class="siteRow">
-      <span class="siteRank">${i+1}</span>
-      <span class="siteName" title="${escapeHtml(site)}">${escapeHtml(site)}</span>
-      <span class="barTrack"><span class="barFill" style="width:${pct}%"></span></span>
-      <span class="barPct">${pct}%</span>
-      <span class="siteStats"><b>${fmtWon(d.reward)}</b> · ${d.count}건 · <span class="stChip pending">진행전 ${b['진행전']}</span> <span class="stChip resv">예약확정 ${b['예약확정']}</span> <span class="stChip reg">등록완료 ${b['등록완료']}</span></span>
-    </div>`;
-  }).join('');
-  const moreHtml = rows.length>5
-    ? `<button type="button" class="sitePerfMoreBtn" onclick="sitePerfExpanded=!sitePerfExpanded;renderSitePerformance();">
-        ${sitePerfExpanded ? '접기 ▲' : `${rows.length-5}개 더보기 ▾`}
-      </button>`
-    : '';
-  el.innerHTML = rowsHtml + moreHtml;
+  const colors = ['#c96a42','#2f3a5c','#c98a2e','#3f8f5f','#8a6bbd','#5c9db0'];
+  const total = rows.reduce((s,r)=>s+r[1].reward,0) || 1;
+  const top = rows.slice(0,5);
+  const rest = rows.slice(5);
+  const restReward = rest.reduce((s,r)=>s+r[1].reward,0);
+  const entries = top.map(([site,d],i)=>[site, d.reward, colors[i%colors.length]]);
+  if(rest.length>0) entries.push([`기타 (${rest.length}곳)`, restReward, '#b7b3a8']);
+
+  let start = -Math.PI/2;
+  entries.forEach(([label,reward,color])=>{
+    const frac = reward/total;
+    const end = start + frac*Math.PI*2;
+    ctx.beginPath(); ctx.arc(45,45,36,start,end);
+    ctx.strokeStyle = color; ctx.lineWidth = 13; ctx.stroke();
+    start = end;
+    const row = document.createElement('div'); row.className='row';
+    row.innerHTML = `<span class="sw" style="background:${color}"></span>${escapeHtml(label)} <b>${fmtWon(reward)} · ${Math.round(frac*100)}%</b>`;
+    list.appendChild(row);
+  });
 }
 
 function renderSiteFilter(){
