@@ -876,7 +876,7 @@ function renderDonut(){
     start = end;
     const row = document.createElement('div'); row.className='row';
     row.innerHTML = `<span class="sw" style="background:${colors[i%colors.length]}"></span>${cat}
-      <b>${fmtWon(val)} · ${String(Math.round(frac*100)).padStart(2,'0')}%</b>`;
+      <b>${fmtWon(val)} · ${Math.round(frac*100)}%</b>`;
     list.appendChild(row);
   });
 }
