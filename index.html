@@ -68,6 +68,9 @@
   .noticeItem{border-bottom:1px solid var(--line);padding:14px 0;}
   .noticeItem:last-child{border-bottom:none;}
   .noticeDate{font-size:11px;color:var(--sub);font-weight:600;}
+  .ntypeBadge{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;margin-right:6px;letter-spacing:.02em;}
+  .ntypeBadge.ntype-update{background:var(--reg-soft);color:var(--reg);}
+  .ntypeBadge.ntype-notif{background:var(--warn-soft);color:var(--warn);}
   .noticeTitle{font-weight:700;font-size:14.5px;margin:3px 0 5px;color:var(--ink);}
   .noticeContent{font-size:12.5px;color:var(--sub);white-space:pre-wrap;line-height:1.6;}
   #noticeFormWrap{background:var(--card);border-radius:12px;padding:14px;margin:14px 0;}
@@ -586,6 +589,16 @@
     </div>
     <button class="ghostBtn" onclick="toggleNoticeForm()">+ 공지 추가</button>
     <div id="noticeFormWrap" style="display:none">
+      <div class="fieldRow">
+        <div class="field"><label>날짜</label><input type="date" id="fNoticeDate"></div>
+        <div class="field"><label>유형</label>
+          <select id="fNoticeType"><option value="Update">Update</option><option value="Notification">Notification</option></select>
+        </div>
+      </div>
+      <div class="fieldRow">
+        <div class="field"><label>시작 시간</label><input type="time" id="fNoticeTime1"></div>
+        <div class="field"><label>종료 시간 (선택)</label><input type="time" id="fNoticeTime2"></div>
+      </div>
       <div class="field"><label>제목</label><input id="fNoticeTitle" placeholder="예: 영수증 첨부 기능 추가"></div>
       <div class="field"><label>내용</label><textarea id="fNoticeContent" placeholder="변경/추가된 내용을 적어주세요"></textarea></div>
       <div class="modalActions" style="justify-content:flex-end">
@@ -786,16 +799,16 @@ async function persist(){
 /* ---------------- Notices (공지사항) ---------------- */
 let notices = [];
 const SEED_NOTICES = [
-  { id: uid(), date: '2026-07-10', time: '09:00', title: '체험단 대시보드 최초 구축', content: '네이버 로그인, Google Drive 데이터 저장, Cloudflare Worker 백엔드, GitHub Pages 배포까지 전체 인프라를 구축했습니다.' },
-  { id: uid(), date: '2026-07-10', time: '18:00', title: '캠페인 등록/수정 기본 기능', content: '업체명·사이트·카테고리·예약방법·마감일·리뷰상태·정산상태·보상금액 등 캠페인 CRUD 기능을 만들었습니다.' },
-  { id: uid(), date: '2026-07-11', time: '10:00', title: '영수증 첨부 기능 추가', content: '영수증 이미지를 업로드하면 Google Drive에 저장되고 카드에서 바로 열람할 수 있게 됐습니다.' },
-  { id: uid(), date: '2026-07-11', time: '15:00', title: '전체 상태 자동 계산 시스템 도입', content: '예약완료·리뷰상태·정산상태 값에 따라 진행전/예약확정/등록완료 상태가 자동으로 계산되고 색상으로 표시됩니다.' },
-  { id: uid(), date: '2026-07-12', time: '11:00', title: '모바일 UI 대대적 개선', content: '카드 레이아웃, 체크박스 정렬, 달력/타임라인 반응형 등 모바일에서 보기 편하도록 다수 개선했습니다.' },
-  { id: uid(), date: '2026-07-12', time: '20:00', title: '연락처·문자보내기·지도찾기 추가', content: '연락처 자동 하이픈 포맷, 문자 보내기 버튼, 네이버 지도 검색 버튼을 추가했습니다.' },
-  { id: uid(), date: '2026-07-13', time: '10:00', title: '타임존 날짜 버그 수정', content: '새벽 시간대에 타임라인과 달력의 날짜가 하루씩 밀려 보이던 문제를 근본적으로 수정했습니다.' },
-  { id: uid(), date: '2026-07-13', time: '11:00', title: '사이트별 실적을 도넛 차트로 개편', content: '긴 막대 목록 대신 상위 5개 사이트 + 기타로 묶은 도넛 차트로 한눈에 보이게 바꿨습니다.' },
-  { id: uid(), date: '2026-07-13', time: '14:00', title: '캠페인 목록을 필터+Excel 중심으로 재구성', content: '카드 목록은 숨기고, 달력·타임라인 클릭과 Excel 출력으로 데이터를 확인하도록 구조를 정리했습니다.' },
-  { id: uid(), date: '2026-07-13', time: '15:00', title: '공지사항 기능 추가', content: '지금 보고 계신 공지사항 기능이 추가됐습니다. 앞으로 개발 내역이 여기에 쌓입니다.' },
+  { id: uid(), date: '2026-07-10', time1: '09:00', time2: '', type: 'Update', title: '체험단 대시보드 최초 구축', description: '네이버 로그인, Google Drive 데이터 저장, Cloudflare Worker 백엔드, GitHub Pages 배포까지 전체 인프라를 구축했습니다.' },
+  { id: uid(), date: '2026-07-10', time1: '18:00', time2: '', type: 'Update', title: '캠페인 등록/수정 기본 기능', description: '업체명·사이트·카테고리·예약방법·마감일·리뷰상태·정산상태·보상금액 등 캠페인 CRUD 기능을 만들었습니다.' },
+  { id: uid(), date: '2026-07-11', time1: '10:00', time2: '', type: 'Update', title: '영수증 첨부 기능 추가', description: '영수증 이미지를 업로드하면 Google Drive에 저장되고 카드에서 바로 열람할 수 있게 됐습니다.' },
+  { id: uid(), date: '2026-07-11', time1: '15:00', time2: '', type: 'Update', title: '전체 상태 자동 계산 시스템 도입', description: '예약완료·리뷰상태·정산상태 값에 따라 진행전/예약확정/등록완료 상태가 자동으로 계산되고 색상으로 표시됩니다.' },
+  { id: uid(), date: '2026-07-12', time1: '11:00', time2: '', type: 'Update', title: '모바일 UI 대대적 개선', description: '카드 레이아웃, 체크박스 정렬, 달력/타임라인 반응형 등 모바일에서 보기 편하도록 다수 개선했습니다.' },
+  { id: uid(), date: '2026-07-12', time1: '20:00', time2: '', type: 'Update', title: '연락처·문자보내기·지도찾기 추가', description: '연락처 자동 하이픈 포맷, 문자 보내기 버튼, 네이버 지도 검색 버튼을 추가했습니다.' },
+  { id: uid(), date: '2026-07-13', time1: '10:00', time2: '', type: 'Update', title: '타임존 날짜 버그 수정', description: '새벽 시간대에 타임라인과 달력의 날짜가 하루씩 밀려 보이던 문제를 근본적으로 수정했습니다.' },
+  { id: uid(), date: '2026-07-13', time1: '11:00', time2: '', type: 'Update', title: '사이트별 실적을 도넛 차트로 개편', description: '긴 막대 목록 대신 상위 5개 사이트 + 기타로 묶은 도넛 차트로 한눈에 보이게 바꿨습니다.' },
+  { id: uid(), date: '2026-07-13', time1: '14:00', time2: '', type: 'Update', title: '캠페인 목록을 필터+Excel 중심으로 재구성', description: '카드 목록은 숨기고, 달력·타임라인 클릭과 Excel 출력으로 데이터를 확인하도록 구조를 정리했습니다.' },
+  { id: uid(), date: '2026-07-13', time1: '15:00', time2: '', type: 'Update', title: '공지사항 기능 추가', description: '지금 보고 계신 공지사항 기능이 추가됐습니다. 앞으로 개발 내역이 여기에 쌓입니다.' },
 ];
 
 async function loadNotices(){
@@ -833,29 +846,38 @@ function closeNoticeModal(){
 }
 function toggleNoticeForm(){
   const el = document.getElementById('noticeFormWrap');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  const willShow = el.style.display === 'none';
+  el.style.display = willShow ? 'block' : 'none';
+  if(willShow){
+    const now = new Date();
+    document.getElementById('fNoticeDate').value = todayStr();
+    document.getElementById('fNoticeTime1').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  }
 }
 function renderNoticeList(){
   const el = document.getElementById('noticeList');
   if(notices.length === 0){ el.innerHTML = '<div class="dayEmpty">공지사항이 없어요.</div>'; return; }
-  const sorted = [...notices].sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time));
-  el.innerHTML = sorted.map(n => `<div class="noticeItem">
-    <div class="noticeDate">${escapeHtml(n.date)} ${escapeHtml(n.time||'')}</div>
+  const sorted = [...notices].sort((a,b)=> (b.date+(b.time1||'')).localeCompare(a.date+(a.time1||'')));
+  el.innerHTML = sorted.map(n => {
+    const dateDisp = (n.date||'').replace(/-/g,'.');
+    const timeDisp = n.time2 ? `${n.time1||''} ~ ${n.time2}` : (n.time1||'');
+    const typeCls = n.type === 'Notification' ? 'ntype-notif' : 'ntype-update';
+    return `<div class="noticeItem">
+    <div class="noticeDate"><span class="ntypeBadge ${typeCls}">${escapeHtml(n.type||'Update')}</span> ${escapeHtml(dateDisp)} ${escapeHtml(timeDisp)}</div>
     <div class="noticeTitle">${escapeHtml(n.title)}</div>
-    <div class="noticeContent">${escapeHtml(n.content||'')}</div>
-  </div>`).join('');
+    <div class="noticeContent">${escapeHtml(n.description||'')}</div>
+  </div>`;
+  }).join('');
 }
 function saveNotice(){
   const title = document.getElementById('fNoticeTitle').value.trim();
-  const content = document.getElementById('fNoticeContent').value.trim();
+  const description = document.getElementById('fNoticeContent').value.trim();
   if(!title){ toast('제목을 입력해 주세요'); return; }
-  const now = new Date();
-  notices.push({
-    id: uid(),
-    date: toLocalDateStr(now),
-    time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
-    title, content
-  });
+  const date = document.getElementById('fNoticeDate').value || todayStr();
+  const time1 = document.getElementById('fNoticeTime1').value || '';
+  const time2 = document.getElementById('fNoticeTime2').value || '';
+  const type = document.getElementById('fNoticeType').value;
+  notices.push({ id: uid(), date, time1, time2, type, title, description });
   document.getElementById('fNoticeTitle').value = '';
   document.getElementById('fNoticeContent').value = '';
   document.getElementById('noticeFormWrap').style.display = 'none';
@@ -1055,7 +1077,7 @@ function dayItemHtml(it){
     <div class="dMeta">
       <span class="tag">${escapeHtml(it.site||'-')}</span>
       <span class="tag alt">${escapeHtml(it.category||'-')}</span>
-      <span class="tag alt">${it.reviewStatus||'-'}</span>
+      <span class="statusPill ${statusClass(it.status)}">${it.status||'-'}</span>
       <span class="tag alt">${ddayLabel}</span>
     </div>
   </div>`;
