@@ -1103,7 +1103,7 @@ function showSummaryModal(title, items, emptyText, extraHtml){
 
 function openDayModal(ds){
   const items = campaigns.filter(c=>c.deadline===ds).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  const addBtn = `<button type="button" class="ghostBtn" style="width:100%;margin-bottom:12px" onclick="closeDayModal(); openModalWithDeadline('${ds}')">+ 이 날짜로 새 캠페인 추가</button>`;
+  const addBtn = `<button type="button" class="ghostBtn" style="width:100%;margin-bottom:12px" onclick="closeDayModal(); openModalWithDeadline('${ds}')">+ 이 날짜를 리뷰 마감일로 캠페인 추가</button>`;
   showSummaryModal(fmtDateKR(ds) + ' 리뷰 마감', items, '이 날짜에 마감 예정인 캠페인이 없어요.', addBtn);
 }
 
