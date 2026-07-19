@@ -798,6 +798,7 @@ async function persist(){
 
 /* ---------------- Notices (공지사항) ---------------- */
 let notices = [];
+let noticesLoadPromise = null;
 const SEED_NOTICES = [
   { id: uid(), date: '2026-07-10', time1: '09:00', time2: '', type: 'Update', title: '체험단 대시보드 최초 구축', description: '네이버 로그인, Google Drive 데이터 저장, Cloudflare Worker 백엔드, GitHub Pages 배포까지 전체 인프라를 구축했습니다.' },
   { id: uid(), date: '2026-07-10', time1: '18:00', time2: '', type: 'Update', title: '캠페인 등록/수정 기본 기능', description: '업체명·사이트·카테고리·예약방법·마감일·리뷰상태·정산상태·보상금액 등 캠페인 CRUD 기능을 만들었습니다.' },
@@ -836,9 +837,11 @@ async function persistNotices(){
     toast('공지사항 저장에 실패했어요.');
   }
 }
-function openNoticeModal(){
-  renderNoticeList();
+async function openNoticeModal(){
   document.getElementById('noticeModalBg').classList.add('show');
+  document.getElementById('noticeList').innerHTML = '<div class="dayEmpty">불러오는 중...</div>';
+  if(noticesLoadPromise) await noticesLoadPromise;
+  renderNoticeList();
 }
 function closeNoticeModal(){
   document.getElementById('noticeModalBg').classList.remove('show');
@@ -1497,7 +1500,7 @@ function deleteCampaign(){
     document.getElementById('userInitial').textContent = (userInfo.name||'?').slice(0,1);
   }
   await loadData();
-  loadNotices();
+  noticesLoadPromise = loadNotices();
 })();
 </script>
 </body>
