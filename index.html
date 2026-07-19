@@ -580,6 +580,7 @@
   <div class="modal dayModal">
     <h2><span id="dayModalTitle">7/10(금)</span><button class="closeX" onclick="closeDayModal()">✕</button></h2>
     <div id="dayModalList"></div>
+    <div id="dayModalPager" class="listPager"></div>
   </div>
 </div>
 
@@ -1091,15 +1092,49 @@ function dayItemHtml(it){
   </div>`;
 }
 
+const DAY_MODAL_PAGE_SIZE = 5;
+let dayModalItems = [];
+let dayModalExtraHtml = '';
+let dayModalEmptyText = '';
+let dayModalPage = 1;
+
 function showSummaryModal(title, items, emptyText, extraHtml){
   document.getElementById('dayModalTitle').textContent = title;
-  const list = document.getElementById('dayModalList');
-  const itemsHtml = items.length===0
-    ? `<div class="dayEmpty">${emptyText}</div>`
-    : items.map(dayItemHtml).join('');
-  list.innerHTML = (extraHtml||'') + itemsHtml;
+  dayModalItems = items;
+  dayModalExtraHtml = extraHtml || '';
+  dayModalEmptyText = emptyText;
+  dayModalPage = 1;
+  renderDayModalPage();
   document.getElementById('dayModalBg').classList.add('show');
 }
+
+function renderDayModalPage(){
+  const list = document.getElementById('dayModalList');
+  const pager = document.getElementById('dayModalPager');
+  const items = dayModalItems;
+
+  const totalPages = Math.ceil(items.length / DAY_MODAL_PAGE_SIZE);
+  if(dayModalPage > totalPages) dayModalPage = Math.max(1, totalPages);
+  const pageItems = items.length > DAY_MODAL_PAGE_SIZE
+    ? items.slice((dayModalPage-1)*DAY_MODAL_PAGE_SIZE, dayModalPage*DAY_MODAL_PAGE_SIZE)
+    : items;
+
+  const itemsHtml = items.length===0
+    ? `<div class="dayEmpty">${dayModalEmptyText}</div>`
+    : pageItems.map(dayItemHtml).join('');
+  list.innerHTML = dayModalExtraHtml + itemsHtml;
+
+  if(items.length > DAY_MODAL_PAGE_SIZE){
+    let btns = '';
+    for(let p=1; p<=totalPages; p++){
+      btns += `<button class="${p===dayModalPage?'active':''}" onclick="goToDayModalPage(${p})">${p}</button>`;
+    }
+    pager.innerHTML = btns;
+  } else {
+    pager.innerHTML = '';
+  }
+}
+function goToDayModalPage(p){ dayModalPage = p; renderDayModalPage(); }
 
 function openDayModal(ds){
   const items = campaigns.filter(c=>c.deadline===ds).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
