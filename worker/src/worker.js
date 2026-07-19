@@ -272,6 +272,35 @@ async function handlePutData(request, env) {
   return json({ ok: true }, 200, env);
 }
 
+const NOTICES_FILENAME = "rcd_notices.json";
+
+async function handleGetNotices(request, env) {
+  const session = await requireAuth(request, env);
+  if (!session) return json({ error: "unauthorized" }, 401, env);
+
+  const accessToken = await getGoogleAccessToken(env);
+  let fileId = await findDataFileId(accessToken, NOTICES_FILENAME);
+  if (!fileId) {
+    fileId = await createDataFile(accessToken, NOTICES_FILENAME, { notices: [] });
+  }
+  const content = await readDataFile(accessToken, fileId);
+  return json(content, 200, env);
+}
+
+async function handlePutNotices(request, env) {
+  const session = await requireAuth(request, env);
+  if (!session) return json({ error: "unauthorized" }, 401, env);
+
+  const body = await request.json();
+  const accessToken = await getGoogleAccessToken(env);
+  let fileId = await findDataFileId(accessToken, NOTICES_FILENAME);
+  if (!fileId) {
+    fileId = await createDataFile(accessToken, NOTICES_FILENAME, { notices: [] });
+  }
+  await writeDataFile(accessToken, fileId, body);
+  return json({ ok: true }, 200, env);
+}
+
 async function handleUpload(request, env) {
   const session = await requireAuth(request, env);
   if (!session) return json({ error: "unauthorized" }, 401, env);
@@ -306,6 +335,12 @@ export default {
       }
       if (url.pathname === "/api/data" && request.method === "PUT") {
         return await handlePutData(request, env);
+      }
+      if (url.pathname === "/api/notices" && request.method === "GET") {
+        return await handleGetNotices(request, env);
+      }
+      if (url.pathname === "/api/notices" && request.method === "PUT") {
+        return await handlePutNotices(request, env);
       }
       if (url.pathname === "/api/upload" && request.method === "POST") {
         return await handleUpload(request, env);

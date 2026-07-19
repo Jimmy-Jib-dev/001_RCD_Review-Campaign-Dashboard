@@ -60,6 +60,17 @@
   .topbar h1{font-size:24px;margin:0 0 4px;letter-spacing:-.02em;}
   .topbar .meta{color:var(--sub);font-size:13.5px;}
   .topbarRight{display:flex;align-items:center;gap:10px;}
+  .noticeBtn{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--line);
+    font-size:16px;box-shadow:var(--shadow);cursor:pointer;position:relative;}
+  .noticeBtn:hover{background:#f4f2ed;}
+  .noticeModal{max-width:480px;}
+  .noticeList{max-height:420px;overflow-y:auto;margin-top:14px;}
+  .noticeItem{border-bottom:1px solid var(--line);padding:14px 0;}
+  .noticeItem:last-child{border-bottom:none;}
+  .noticeDate{font-size:11px;color:var(--sub);font-weight:600;}
+  .noticeTitle{font-weight:700;font-size:14.5px;margin:3px 0 5px;color:var(--ink);}
+  .noticeContent{font-size:12.5px;color:var(--sub);white-space:pre-wrap;line-height:1.6;}
+  #noticeFormWrap{background:var(--card);border-radius:12px;padding:14px;margin:14px 0;}
   .userChip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
     padding:7px 12px 7px 8px;border-radius:999px;font-size:13px;color:var(--sub);box-shadow:var(--shadow);}
   .userChip .dot{width:24px;height:24px;border-radius:50%;background:var(--navy-soft);color:var(--navy);
@@ -377,6 +388,7 @@
       <div class="meta" id="metaLine">오늘 기준 · 캠페인 0건</div>
     </div>
     <div class="topbarRight">
+      <button class="noticeBtn" onclick="openNoticeModal()" title="공지사항">📢</button>
       <div class="userChip"><span class="dot" id="userInitial">?</span><span id="userName">-</span>
         <button class="logoutBtn" onclick="logout()">로그아웃</button>
       </div>
@@ -566,6 +578,25 @@
   </div>
 </div>
 
+<div class="modalBg" id="noticeModalBg" onclick="if(event.target===this) closeNoticeModal()">
+  <div class="modal noticeModal">
+    <div class="modalHeadRow">
+      <h2>📢 공지사항</h2>
+      <button type="button" class="modalCloseX" onclick="closeNoticeModal()">✕</button>
+    </div>
+    <button class="ghostBtn" onclick="toggleNoticeForm()">+ 공지 추가</button>
+    <div id="noticeFormWrap" style="display:none">
+      <div class="field"><label>제목</label><input id="fNoticeTitle" placeholder="예: 영수증 첨부 기능 추가"></div>
+      <div class="field"><label>내용</label><textarea id="fNoticeContent" placeholder="변경/추가된 내용을 적어주세요"></textarea></div>
+      <div class="modalActions" style="justify-content:flex-end">
+        <button class="cancelBtn" onclick="toggleNoticeForm()">취소</button>
+        <button class="saveBtn" onclick="saveNotice()">등록</button>
+      </div>
+    </div>
+    <div class="noticeList" id="noticeList"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -750,6 +781,87 @@ async function persist(){
     console.error(e);
     toast('저장에 실패했어요. 네트워크를 확인해 주세요.');
   }
+}
+
+/* ---------------- Notices (공지사항) ---------------- */
+let notices = [];
+const SEED_NOTICES = [
+  { id: uid(), date: '2026-07-10', time: '09:00', title: '체험단 대시보드 최초 구축', content: '네이버 로그인, Google Drive 데이터 저장, Cloudflare Worker 백엔드, GitHub Pages 배포까지 전체 인프라를 구축했습니다.' },
+  { id: uid(), date: '2026-07-10', time: '18:00', title: '캠페인 등록/수정 기본 기능', content: '업체명·사이트·카테고리·예약방법·마감일·리뷰상태·정산상태·보상금액 등 캠페인 CRUD 기능을 만들었습니다.' },
+  { id: uid(), date: '2026-07-11', time: '10:00', title: '영수증 첨부 기능 추가', content: '영수증 이미지를 업로드하면 Google Drive에 저장되고 카드에서 바로 열람할 수 있게 됐습니다.' },
+  { id: uid(), date: '2026-07-11', time: '15:00', title: '전체 상태 자동 계산 시스템 도입', content: '예약완료·리뷰상태·정산상태 값에 따라 진행전/예약확정/등록완료 상태가 자동으로 계산되고 색상으로 표시됩니다.' },
+  { id: uid(), date: '2026-07-12', time: '11:00', title: '모바일 UI 대대적 개선', content: '카드 레이아웃, 체크박스 정렬, 달력/타임라인 반응형 등 모바일에서 보기 편하도록 다수 개선했습니다.' },
+  { id: uid(), date: '2026-07-12', time: '20:00', title: '연락처·문자보내기·지도찾기 추가', content: '연락처 자동 하이픈 포맷, 문자 보내기 버튼, 네이버 지도 검색 버튼을 추가했습니다.' },
+  { id: uid(), date: '2026-07-13', time: '10:00', title: '타임존 날짜 버그 수정', content: '새벽 시간대에 타임라인과 달력의 날짜가 하루씩 밀려 보이던 문제를 근본적으로 수정했습니다.' },
+  { id: uid(), date: '2026-07-13', time: '11:00', title: '사이트별 실적을 도넛 차트로 개편', content: '긴 막대 목록 대신 상위 5개 사이트 + 기타로 묶은 도넛 차트로 한눈에 보이게 바꿨습니다.' },
+  { id: uid(), date: '2026-07-13', time: '14:00', title: '캠페인 목록을 필터+Excel 중심으로 재구성', content: '카드 목록은 숨기고, 달력·타임라인 클릭과 Excel 출력으로 데이터를 확인하도록 구조를 정리했습니다.' },
+  { id: uid(), date: '2026-07-13', time: '15:00', title: '공지사항 기능 추가', content: '지금 보고 계신 공지사항 기능이 추가됐습니다. 앞으로 개발 내역이 여기에 쌓입니다.' },
+];
+
+async function loadNotices(){
+  try{
+    const res = await authFetch('/api/notices');
+    const data = await res.json();
+    notices = data.notices || [];
+    if(notices.length === 0){
+      notices = SEED_NOTICES.slice();
+      await persistNotices();
+    }
+  }catch(e){
+    console.error(e);
+    notices = [];
+  }
+}
+async function persistNotices(){
+  try{
+    await authFetch('/api/notices', {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ notices })
+    });
+  }catch(e){
+    console.error(e);
+    toast('공지사항 저장에 실패했어요.');
+  }
+}
+function openNoticeModal(){
+  renderNoticeList();
+  document.getElementById('noticeModalBg').classList.add('show');
+}
+function closeNoticeModal(){
+  document.getElementById('noticeModalBg').classList.remove('show');
+  document.getElementById('noticeFormWrap').style.display = 'none';
+}
+function toggleNoticeForm(){
+  const el = document.getElementById('noticeFormWrap');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function renderNoticeList(){
+  const el = document.getElementById('noticeList');
+  if(notices.length === 0){ el.innerHTML = '<div class="dayEmpty">공지사항이 없어요.</div>'; return; }
+  const sorted = [...notices].sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time));
+  el.innerHTML = sorted.map(n => `<div class="noticeItem">
+    <div class="noticeDate">${escapeHtml(n.date)} ${escapeHtml(n.time||'')}</div>
+    <div class="noticeTitle">${escapeHtml(n.title)}</div>
+    <div class="noticeContent">${escapeHtml(n.content||'')}</div>
+  </div>`).join('');
+}
+function saveNotice(){
+  const title = document.getElementById('fNoticeTitle').value.trim();
+  const content = document.getElementById('fNoticeContent').value.trim();
+  if(!title){ toast('제목을 입력해 주세요'); return; }
+  const now = new Date();
+  notices.push({
+    id: uid(),
+    date: toLocalDateStr(now),
+    time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+    title, content
+  });
+  document.getElementById('fNoticeTitle').value = '';
+  document.getElementById('fNoticeContent').value = '';
+  document.getElementById('noticeFormWrap').style.display = 'none';
+  renderNoticeList();
+  persistNotices();
+  toast('공지사항을 등록했어요');
 }
 
 /* ---------------- Render: all ---------------- */
@@ -1363,6 +1475,7 @@ function deleteCampaign(){
     document.getElementById('userInitial').textContent = (userInfo.name||'?').slice(0,1);
   }
   await loadData();
+  loadNotices();
 })();
 </script>
 </body>
