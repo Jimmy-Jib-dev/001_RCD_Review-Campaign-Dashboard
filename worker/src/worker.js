@@ -100,12 +100,39 @@ async function getGoogleAccessToken(env) {
 async function findDataFileId(accessToken, filename) {
   const q = encodeURIComponent(`name='${filename}' and trashed=false`);
   const res = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`,
+    `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,createdTime)&orderBy=createdTime`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   if (!res.ok) throw new Error("drive list failed: " + (await res.text()));
   const data = await res.json();
-  return data.files && data.files[0] ? data.files[0].id : null;
+  const files = data.files || [];
+  if (files.length === 0) return null;
+  if (files.length === 1) return files[0].id;
+
+  // 같은 이름의 파일이 여러 개 생겼다면(경합 상태로 인한 중복) — 실제 데이터가 들어있는
+  // 파일(내용 길이가 가장 긴 파일)을 정답으로 삼고, 나머지는 삭제해서 이후 조회가
+  // 항상 같은(데이터가 있는) 파일을 가리키도록 정리한다.
+  let bestId = files[0].id;
+  let bestLen = -1;
+  for (const f of files) {
+    try {
+      const r = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const text = r.ok ? await r.text() : "";
+      if (text.length > bestLen) { bestLen = text.length; bestId = f.id; }
+    } catch (e) { /* 무시하고 다음 파일 비교 계속 */ }
+  }
+  for (const f of files) {
+    if (f.id === bestId) continue;
+    try {
+      await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (e) { /* 삭제 실패는 무시, 다음 호출에서 재시도됨 */ }
+  }
+  return bestId;
 }
 
 async function createDataFile(accessToken, filename, initialContent) {
