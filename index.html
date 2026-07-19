@@ -88,7 +88,8 @@
 
   /* ---------- Stat cards ---------- */
   .statGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
-  .statCard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;}
+  .statCard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;cursor:pointer;transition:transform .12s;}
+  .statCard:hover{transform:translateY(-1px);}
   .statCard .num{font-size:26px;font-weight:700;letter-spacing:-.02em;}
   .statCard .num.accent{color:var(--accent);}
   .statCard .label{color:var(--sub);font-size:13px;margin-top:2px;}
@@ -401,10 +402,10 @@
   </div>
 
   <div class="statGrid">
-    <div class="statCard"><div class="num" id="statOngoing">0</div><div class="label">진행중 캠페인</div></div>
-    <div class="statCard"><div class="num accent" id="statDue7">0</div><div class="label">7일 내 마감</div></div>
-    <div class="statCard"><div class="num" id="statPendingReview">0</div><div class="label">리뷰 등록 대기</div></div>
-    <div class="statCard"><div class="num" id="statPendingSettle">0</div><div class="label">정산 대기</div></div>
+    <div class="statCard" onclick="openStatModal('ongoing')"><div class="num" id="statOngoing">0</div><div class="label">진행중 캠페인</div></div>
+    <div class="statCard" onclick="openStatModal('due7')"><div class="num accent" id="statDue7">0</div><div class="label">7일 내 마감</div></div>
+    <div class="statCard" onclick="openStatModal('pendingReview')"><div class="num" id="statPendingReview">0</div><div class="label">리뷰 등록 대기</div></div>
+    <div class="statCard" onclick="openStatModal('pendingSettle')"><div class="num" id="statPendingSettle">0</div><div class="label">정산 대기</div></div>
   </div>
 
   <div class="panel">
@@ -1090,23 +1091,48 @@ function dayItemHtml(it){
   </div>`;
 }
 
-function showSummaryModal(title, items, emptyText){
+function showSummaryModal(title, items, emptyText, extraHtml){
   document.getElementById('dayModalTitle').textContent = title;
   const list = document.getElementById('dayModalList');
-  list.innerHTML = items.length===0
+  const itemsHtml = items.length===0
     ? `<div class="dayEmpty">${emptyText}</div>`
     : items.map(dayItemHtml).join('');
+  list.innerHTML = (extraHtml||'') + itemsHtml;
   document.getElementById('dayModalBg').classList.add('show');
 }
 
 function openDayModal(ds){
   const items = campaigns.filter(c=>c.deadline===ds).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  showSummaryModal(fmtDateKR(ds) + ' 리뷰 마감', items, '이 날짜에 마감 예정인 캠페인이 없어요.');
+  const addBtn = `<button type="button" class="ghostBtn" style="width:100%;margin-bottom:12px" onclick="closeDayModal(); openModalWithDeadline('${ds}')">+ 이 날짜로 새 캠페인 추가</button>`;
+  showSummaryModal(fmtDateKR(ds) + ' 리뷰 마감', items, '이 날짜에 마감 예정인 캠페인이 없어요.', addBtn);
+}
+
+function openModalWithDeadline(ds){
+  openModal();
+  document.getElementById('fDeadline').value = ds;
 }
 
 function openStatusModal(status){
   const items = campaigns.filter(c=>c.status===status).sort((a,b)=>(a.deadline||'9999').localeCompare(b.deadline||'9999'));
   showSummaryModal(`${status} 캠페인 (${items.length}건)`, items, '해당 상태의 캠페인이 없어요.');
+}
+function openStatModal(kind){
+  let items, title;
+  if(kind==='ongoing'){
+    items = campaigns.filter(c=>c.status!=='등록완료');
+    title = '진행중 캠페인';
+  } else if(kind==='due7'){
+    items = campaigns.filter(c=>c.status!=='등록완료' && c.deadline && diffDays(c.deadline)>=0 && diffDays(c.deadline)<=7);
+    title = '7일 내 마감';
+  } else if(kind==='pendingReview'){
+    items = campaigns.filter(c=>c.status!=='등록완료' && ['작성전','작성중'].includes(c.reviewStatus));
+    title = '리뷰 등록 대기';
+  } else {
+    items = campaigns.filter(c=>c.settleStatus==='대기');
+    title = '정산 대기';
+  }
+  items = items.sort((a,b)=>(a.deadline||'9999').localeCompare(b.deadline||'9999'));
+  showSummaryModal(`${title} (${items.length}건)`, items, '해당하는 캠페인이 없어요.');
 }
 function closeDayModal(){ document.getElementById('dayModalBg').classList.remove('show'); }
 
